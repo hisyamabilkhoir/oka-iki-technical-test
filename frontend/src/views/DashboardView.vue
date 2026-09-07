@@ -56,27 +56,27 @@
     </div>
 
     <!-- 4 Metric Stat Cards Grid -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-5">
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
       <!-- Card 1: Katalog Produk -->
       <router-link
         to="/products"
-        class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md hover:border-indigo-100 transition-all flex items-center space-x-4 group cursor-pointer min-w-0"
+        class="bg-white rounded-xl p-4 border border-slate-100 shadow-xs hover:shadow-md hover:border-indigo-100 transition-all flex items-center space-x-3.5 group cursor-pointer min-w-0"
       >
-        <div class="w-12 h-12 rounded-2xl bg-indigo-50/70 border border-indigo-100/50 flex items-center justify-center text-indigo-600 shrink-0 group-hover:scale-105 transition-transform">
-          <Package class="w-6 h-6" />
+        <div class="w-10 h-10 rounded-xl bg-indigo-50/80 border border-indigo-100/60 flex items-center justify-center text-indigo-600 shrink-0 group-hover:scale-105 transition-transform">
+          <Package class="w-5 h-5" />
         </div>
         <div class="flex-1 min-w-0">
           <div class="flex items-center justify-between">
-            <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">KATALOG PRODUK</span>
-            <ChevronRight class="w-4 h-4 text-indigo-400 group-hover:translate-x-0.5 transition-transform" />
+            <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">KATALOG PRODUK</span>
+            <ChevronRight class="w-3.5 h-3.5 text-indigo-400 group-hover:translate-x-0.5 transition-transform" />
           </div>
-          <div class="mt-1">
-            <div v-if="loading" class="h-6 w-16 bg-slate-100 animate-pulse rounded"></div>
-            <div v-else class="text-xl md:text-2xl font-bold text-slate-800 leading-tight">
+          <div class="mt-0.5">
+            <div v-if="loading" class="h-5 w-14 bg-slate-100 animate-pulse rounded"></div>
+            <div v-else class="text-base sm:text-lg font-bold text-slate-800 leading-tight">
               {{ productCount }} Item
             </div>
           </div>
-          <p class="text-xs text-slate-400 mt-1 truncate" :title="authStore.tenant?.name">
+          <p class="text-[11px] text-slate-400 mt-0.5 truncate" :title="authStore.tenant?.name">
             Hanya milik {{ authStore.tenant?.name }}
           </p>
         </div>
@@ -85,27 +85,27 @@
       <!-- Card 2: Transaksi Bulan Ini -->
       <router-link
         to="/transactions"
-        class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md hover:border-emerald-100 transition-all flex items-center space-x-4 group cursor-pointer min-w-0"
+        class="bg-white rounded-xl p-4 border border-slate-100 shadow-xs hover:shadow-md hover:border-emerald-100 transition-all flex items-center space-x-3.5 group cursor-pointer min-w-0"
       >
-        <div class="w-12 h-12 rounded-2xl bg-emerald-50/70 border border-emerald-100/50 flex items-center justify-center text-emerald-600 shrink-0 group-hover:scale-105 transition-transform">
-          <ShoppingCart class="w-6 h-6" />
+        <div class="w-10 h-10 rounded-xl bg-emerald-50/80 border border-emerald-100/60 flex items-center justify-center text-emerald-600 shrink-0 group-hover:scale-105 transition-transform">
+          <ShoppingCart class="w-5 h-5" />
         </div>
         <div class="flex-1 min-w-0">
           <div class="flex items-center justify-between">
-            <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">TRANSAKSI BULAN INI</span>
-            <ChevronRight class="w-4 h-4 text-indigo-400 group-hover:translate-x-0.5 transition-transform" />
+            <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">TRANSAKSI BULAN INI</span>
+            <ChevronRight class="w-3.5 h-3.5 text-indigo-400 group-hover:translate-x-0.5 transition-transform" />
           </div>
-          <div class="mt-1 flex items-center space-x-2">
-            <div v-if="loading" class="h-6 w-14 bg-slate-100 animate-pulse rounded"></div>
-            <div v-else class="text-xl md:text-2xl font-bold text-slate-800 leading-tight">
+          <div class="mt-0.5 flex items-center space-x-1.5">
+            <div v-if="loading" class="h-5 w-12 bg-slate-100 animate-pulse rounded"></div>
+            <div v-else class="text-base sm:text-lg font-bold text-slate-800 leading-tight">
               {{ monthlyTransactionsCount }} Trx
             </div>
-            <span class="bg-emerald-50 text-emerald-600 border border-emerald-200/50 text-[11px] font-semibold px-2 py-0.5 rounded-full inline-flex items-center space-x-0.5">
+            <span class="bg-emerald-50 text-emerald-600 border border-emerald-200/50 text-[10px] font-semibold px-1.5 py-0.2 rounded-full inline-flex items-center space-x-0.5">
               <span>↑</span>
               <span>25%</span>
             </span>
           </div>
-          <p class="text-xs text-slate-400 mt-1">Periode bulan berjalan</p>
+          <p class="text-[11px] text-slate-400 mt-0.5">Periode bulan berjalan</p>
         </div>
       </router-link>
 
@@ -113,25 +113,25 @@
       <router-link
         :to="authStore.isOwner ? '/reports' : '#'"
         :class="[
-          'bg-white rounded-2xl p-5 border border-slate-100 shadow-sm transition-all flex items-center space-x-4 group min-w-0',
+          'bg-white rounded-xl p-4 border border-slate-100 shadow-xs transition-all flex items-center space-x-3.5 group min-w-0',
           authStore.isOwner ? 'hover:shadow-md hover:border-amber-100 cursor-pointer' : 'cursor-default'
         ]"
       >
-        <div class="w-12 h-12 rounded-2xl bg-amber-50/70 border border-amber-100/50 flex items-center justify-center text-amber-600 shrink-0 group-hover:scale-105 transition-transform">
-          <ShieldAlert class="w-6 h-6" />
+        <div class="w-10 h-10 rounded-xl bg-amber-50/80 border border-amber-100/60 flex items-center justify-center text-amber-600 shrink-0 group-hover:scale-105 transition-transform">
+          <ShieldAlert class="w-5 h-5" />
         </div>
         <div class="flex-1 min-w-0">
           <div class="flex items-center justify-between">
-            <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">OMZET BULAN INI</span>
-            <ChevronRight class="w-4 h-4 text-indigo-400 group-hover:translate-x-0.5 transition-transform" />
+            <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">OMZET BULAN INI</span>
+            <ChevronRight class="w-3.5 h-3.5 text-indigo-400 group-hover:translate-x-0.5 transition-transform" />
           </div>
-          <div class="mt-1">
-            <div v-if="loading" class="h-6 w-28 bg-slate-100 animate-pulse rounded"></div>
-            <div v-else-if="authStore.isOwner" class="flex items-center space-x-2 flex-wrap">
-              <span class="text-lg lg:text-xl font-bold text-slate-800 leading-tight">
+          <div class="mt-0.5">
+            <div v-if="loading" class="h-5 w-24 bg-slate-100 animate-pulse rounded"></div>
+            <div v-else-if="authStore.isOwner" class="flex items-center space-x-1.5 flex-wrap">
+              <span class="text-base sm:text-lg font-bold text-slate-800 leading-tight">
                 {{ formatCurrency(monthlyRevenue) }}
               </span>
-              <span class="bg-emerald-50 text-emerald-600 border border-emerald-200/50 text-[11px] font-semibold px-2 py-0.5 rounded-full inline-flex items-center space-x-0.5">
+              <span class="bg-emerald-50 text-emerald-600 border border-emerald-200/50 text-[10px] font-semibold px-1.5 py-0.2 rounded-full inline-flex items-center space-x-0.5">
                 <span>↑</span>
                 <span>12%</span>
               </span>
@@ -140,27 +140,27 @@
               Terbatas (Hanya Owner)
             </div>
           </div>
-          <p class="text-xs text-slate-400 mt-1">Perhitungan server-side</p>
+          <p class="text-[11px] text-slate-400 mt-0.5">Perhitungan server-side</p>
         </div>
       </router-link>
 
       <!-- Card 4: Hak Akses Sistem -->
-      <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md transition-all flex items-center space-x-4 group min-w-0">
-        <div class="w-12 h-12 rounded-2xl bg-blue-50/70 border border-blue-100/50 flex items-center justify-center text-blue-600 shrink-0 group-hover:scale-105 transition-transform">
-          <ShieldCheck class="w-6 h-6" />
+      <div class="bg-white rounded-xl p-4 border border-slate-100 shadow-xs hover:shadow-md transition-all flex items-center space-x-3.5 group min-w-0">
+        <div class="w-10 h-10 rounded-xl bg-blue-50/80 border border-blue-100/60 flex items-center justify-center text-blue-600 shrink-0 group-hover:scale-105 transition-transform">
+          <ShieldCheck class="w-5 h-5" />
         </div>
         <div class="flex-1 min-w-0">
           <div class="flex items-center justify-between">
-            <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">HAK AKSES SISTEM</span>
-            <ChevronRight class="w-4 h-4 text-indigo-400" />
+            <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">HAK AKSES SISTEM</span>
+            <ChevronRight class="w-3.5 h-3.5 text-indigo-400" />
           </div>
-          <div class="mt-1">
-            <div class="text-xl md:text-2xl font-bold text-indigo-600 tracking-wide uppercase">
+          <div class="mt-0.5">
+            <div class="text-base sm:text-lg font-bold text-indigo-600 tracking-wide uppercase">
               {{ authStore.user?.role }}
             </div>
           </div>
-          <p class="text-xs text-slate-400 mt-1 truncate">
-            {{ authStore.isOwner ? 'Full Control: Produk, Trx, Laporan' : 'Kasir & View Produk (No Delete/Report)' }}
+          <p class="text-[11px] text-slate-400 mt-0.5 truncate">
+            {{ authStore.isOwner ? 'Full Control: Master & Laporan' : 'Kasir & View Produk (Terbatas)' }}
           </p>
         </div>
       </div>
@@ -169,20 +169,20 @@
     <!-- Recent Transactions Table Section -->
     <div class="bg-white rounded-2xl border border-slate-100 shadow-xs overflow-hidden">
       <!-- Card Header -->
-      <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+      <div class="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
         <div class="flex items-center space-x-3">
           <div class="w-9 h-9 rounded-xl bg-slate-50 border border-slate-200/60 flex items-center justify-center text-slate-600">
             <Package class="w-4.5 h-4.5" />
           </div>
           <div>
-            <h2 class="text-base font-semibold text-slate-800 leading-tight">Transaksi Terakhir</h2>
-            <p class="text-xs text-slate-400 mt-0.5 font-normal">Daftar transaksi mutakhir tenant {{ authStore.tenant?.name }}</p>
+            <h2 class="text-sm sm:text-base font-semibold text-slate-800 leading-tight">Transaksi Terakhir</h2>
+            <p class="text-[11px] text-slate-400 mt-0.5 font-normal">Daftar transaksi mutakhir tenant {{ authStore.tenant?.name }}</p>
           </div>
         </div>
 
         <router-link
           to="/transactions"
-          class="text-xs font-semibold text-indigo-600 hover:text-indigo-700 bg-indigo-50/70 hover:bg-indigo-100/80 px-3.5 py-1.5 rounded-xl flex items-center space-x-1.5 transition-colors border border-indigo-100/60"
+          class="text-[11px] font-semibold text-indigo-600 hover:text-indigo-700 bg-indigo-50/70 hover:bg-indigo-100/80 px-3 py-1.5 rounded-lg flex items-center space-x-1 transition-colors border border-indigo-100/60"
         >
           <span>Lihat Semua</span>
           <ArrowRight class="w-3 h-3" />
@@ -203,24 +203,24 @@
         </div>
 
         <table v-else class="w-full min-w-[620px] text-left text-xs">
-          <thead class="bg-white text-[11px] font-semibold uppercase tracking-wider text-slate-400 border-b border-slate-100">
+          <thead class="bg-white text-[10px] font-semibold uppercase tracking-wider text-slate-400 border-b border-slate-100">
             <tr>
-              <th class="py-3.5 px-5">KODE TRANSAKSI</th>
-              <th class="py-3.5 px-5">TANGGAL</th>
-              <th class="py-3.5 px-5">DIBUAT OLEH</th>
-              <th class="py-3.5 px-5">
+              <th class="py-3 px-4">KODE TRANSAKSI</th>
+              <th class="py-3 px-4">TANGGAL</th>
+              <th class="py-3 px-4">DIBUAT OLEH</th>
+              <th class="py-3 px-4">
                 <div class="flex items-center space-x-1">
                   <span>JUMLAH ITEM</span>
                   <ChevronsUpDown class="w-3 h-3 text-slate-400" />
                 </div>
               </th>
-              <th class="py-3.5 px-5">
+              <th class="py-3 px-4">
                 <div class="flex items-center space-x-1">
                   <span>TOTAL TRANSAKSI</span>
                   <ChevronsUpDown class="w-3 h-3 text-slate-400" />
                 </div>
               </th>
-              <th class="py-3.5 px-5 text-center">AKSI</th>
+              <th class="py-3 px-4 text-center">AKSI</th>
             </tr>
           </thead>
           <tbody class="divide-y border-slate-100 divide-slate-100">
@@ -229,7 +229,7 @@
               :key="trx.id"
               class="hover:bg-slate-50/60 transition-colors"
             >
-              <td class="py-3.5 px-5">
+              <td class="py-3 px-4">
                 <button
                   @click="viewReceipt(trx)"
                   class="font-mono font-medium text-indigo-600 hover:text-indigo-800 hover:underline text-xs"
@@ -237,11 +237,11 @@
                   {{ trx.transaction_code }}
                 </button>
               </td>
-              <td class="py-3.5 px-5 text-slate-500 text-xs font-normal">
+              <td class="py-3 px-4 text-slate-500 text-xs font-normal">
                 {{ formatDate(trx.transaction_date) }}
               </td>
-              <td class="py-3.5 px-5">
-                <div class="flex items-center space-x-2">
+              <td class="py-3 px-4">
+                <div class="flex items-center space-x-1.5">
                   <span class="font-medium text-slate-700 text-xs">{{ trx.creator?.name || 'User' }}</span>
                   <span
                     :class="[
@@ -255,17 +255,17 @@
                   </span>
                 </div>
               </td>
-              <td class="py-3.5 px-5 text-slate-600 text-xs font-normal">
+              <td class="py-3 px-4 text-slate-600 text-xs font-normal">
                 {{ trx.items?.length || 1 }} Item
               </td>
-              <td class="py-3.5 px-5 font-semibold text-slate-800 text-xs">
+              <td class="py-3 px-4 font-semibold text-slate-800 text-xs">
                 {{ formatCurrency(trx.total) }}
               </td>
-              <td class="py-3.5 px-5 text-center">
+              <td class="py-3 px-4 text-center">
                 <button
                   @click="viewReceipt(trx)"
                   title="Lihat Struk Resmi"
-                  class="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                  class="p-1 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
                 >
                   <MoreHorizontal class="w-4 h-4" />
                 </button>
