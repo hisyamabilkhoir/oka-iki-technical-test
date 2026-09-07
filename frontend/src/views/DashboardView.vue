@@ -277,71 +277,10 @@
     </div>
 
     <!-- Receipt Modal Dialog -->
-    <div
-      v-if="showReceiptModal"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-2xs"
-    >
-      <div class="bg-white rounded-2xl max-w-sm w-full p-5.5 shadow-xl border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
-        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-          <div class="flex items-center space-x-2 text-indigo-600">
-            <CheckCircle2 class="w-4.5 h-4.5 text-emerald-500" />
-            <h3 class="font-semibold text-sm text-slate-800">Struk Transaksi Resmi</h3>
-          </div>
-          <button @click="showReceiptModal = false" class="text-slate-400 hover:text-slate-600">
-            <X class="w-4 h-4" />
-          </button>
-        </div>
-
-        <div class="mt-4 p-4 bg-slate-50/80 rounded-xl border border-slate-200/70 space-y-3 font-mono text-xs">
-          <div class="text-center pb-2.5 border-b border-dashed border-slate-300">
-            <h4 class="font-semibold text-xs text-slate-800">{{ authStore.tenant?.name }}</h4>
-            <p class="text-[10px] text-slate-500">Mini ERP SaaS Multi-Tenant</p>
-            <p class="text-[10px] text-slate-400 mt-0.5">KODE: {{ currentReceipt?.transaction_code }}</p>
-          </div>
-
-          <div class="flex justify-between text-[11px] text-slate-600">
-            <span>Tanggal: {{ formatDate(currentReceipt?.transaction_date) }}</span>
-            <span>Kasir: {{ currentReceipt?.creator?.name || authStore.user?.name }}</span>
-          </div>
-
-          <div class="py-2 border-y border-dashed border-slate-300 space-y-1.5">
-            <div
-              v-for="item in currentReceipt?.items"
-              :key="item.id"
-              class="flex justify-between items-start text-[11px]"
-            >
-              <div class="min-w-0 pr-2">
-                <p class="font-medium text-slate-800">{{ item.product_name }}</p>
-                <p class="text-slate-400 text-[10px]">
-                  {{ item.qty }} x {{ formatCurrency(item.price_at_transaction) }}
-                </p>
-              </div>
-              <span class="font-semibold text-slate-800 shrink-0">
-                {{ formatCurrency(item.subtotal) }}
-              </span>
-            </div>
-          </div>
-
-          <div class="flex justify-between text-xs font-bold text-slate-800 pt-1">
-            <span>TOTAL DIBAYAR</span>
-            <span class="text-indigo-600">{{ formatCurrency(currentReceipt?.total) }}</span>
-          </div>
-
-          <div class="text-center pt-2 text-[10px] text-slate-400 border-t border-dashed border-slate-300">
-            Price snapshot tersimpan permanen di database.
-          </div>
-        </div>
-
-        <div class="mt-4">
-          <button
-            @click="showReceiptModal = false"
-            class="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium rounded-xl transition-colors"
-          >
-            Tutup Struk
-          </button>
-        </div>
-      </div>
-    </div>
+    <ReceiptModal
+      v-model:show="showReceiptModal"
+      :receipt="currentReceipt"
+    />
   </div>
 </template>
 
@@ -351,6 +290,7 @@ import { useAuthStore } from '../stores/auth';
 import api from '../api/axios';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import dashboardHeroImg from '../assets/dashboard_hero.png';
+import ReceiptModal from '../components/ReceiptModal.vue';
 import {
   Building2,
   Package,
@@ -363,8 +303,6 @@ import {
   ChevronsUpDown,
   ArrowRight,
   MoreHorizontal,
-  X,
-  CheckCircle2,
 } from '@lucide/vue';
 
 const authStore = useAuthStore();

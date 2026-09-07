@@ -44,3 +44,30 @@
 .custom-dark-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #475569;
 }
+
+/* Print styles for ReceiptModal */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  #printable-receipt,
+  #printable-receipt * {
+    visibility: visible;
+  }
+
+  #printable-receipt {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    box-shadow: none !important;
+    border: 1px solid #e2e8f0 !important;
+  }
+}

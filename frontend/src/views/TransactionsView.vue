@@ -297,74 +297,10 @@
     </div>
 
     <!-- RECEIPT / NOTA MODAL -->
-    <div
-      v-if="showReceiptModal"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-    >
-      <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 relative">
-        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-          <div class="flex items-center space-x-2">
-            <Receipt class="w-5 h-5 text-indigo-600" />
-            <h3 class="font-bold text-base text-slate-900">Struk Resmi Transaksi ERP</h3>
-          </div>
-          <button @click="showReceiptModal = false" class="text-slate-400 hover:text-slate-600">
-            <X class="w-5 h-5" />
-          </button>
-        </div>
-
-        <!-- Receipt Content -->
-        <div class="mt-4 p-4 bg-slate-50/90 rounded-2xl border border-slate-200/80 space-y-3 font-mono text-xs">
-          <div class="text-center pb-3 border-b border-dashed border-slate-300">
-            <h4 class="font-bold text-sm text-slate-900">{{ currentReceipt?.tenant_id ? authStore.tenant?.name : authStore.tenant?.name }}</h4>
-            <p class="text-[11px] text-slate-500">SaaS Multi-Tenant Mini ERP</p>
-            <p class="text-[10px] text-slate-400 mt-1">KODE: {{ currentReceipt?.transaction_code }}</p>
-          </div>
-
-          <div class="flex justify-between text-[11px] text-slate-600">
-            <span>Tanggal: {{ formatDate(currentReceipt?.transaction_date) }}</span>
-            <span>Kasir: {{ currentReceipt?.creator?.name || authStore.user?.name }}</span>
-          </div>
-
-          <!-- Items Table -->
-          <div class="py-2 border-y border-dashed border-slate-300 space-y-1.5">
-            <div
-              v-for="item in currentReceipt?.items"
-              :key="item.id"
-              class="flex justify-between items-start text-[11px]"
-            >
-              <div class="min-w-0 pr-2">
-                <p class="font-semibold text-slate-800">{{ item.product_name }}</p>
-                <p class="text-slate-500 text-[10px]">
-                  {{ item.qty }} x {{ formatCurrency(item.price_at_transaction) }}
-                </p>
-              </div>
-              <span class="font-bold text-slate-900 shrink-0">
-                {{ formatCurrency(item.subtotal) }}
-              </span>
-            </div>
-          </div>
-
-          <!-- Total -->
-          <div class="flex justify-between text-sm font-extrabold text-slate-900 pt-1">
-            <span>TOTAL DIBAYAR</span>
-            <span class="text-indigo-600">{{ formatCurrency(currentReceipt?.total) }}</span>
-          </div>
-
-          <div class="text-center pt-2 text-[10px] text-slate-400 border-t border-dashed border-slate-300">
-            Snapshot harga tersimpan secara independen di database.
-          </div>
-        </div>
-
-        <div class="mt-5 flex justify-end space-x-2">
-          <button
-            @click="showReceiptModal = false"
-            class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl"
-          >
-            Tutup Struk
-          </button>
-        </div>
-      </div>
-    </div>
+    <ReceiptModal
+      v-model:show="showReceiptModal"
+      :receipt="currentReceipt"
+    />
   </div>
 </template>
 
@@ -373,6 +309,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useAuthStore } from '../stores/auth';
 import api from '../api/axios';
 import { formatCurrency, formatDate } from '../utils/formatters';
+import ReceiptModal from '../components/ReceiptModal.vue';
 import {
   ShoppingCart,
   Clock,
@@ -382,7 +319,6 @@ import {
   Receipt,
   AlertCircle,
   ShieldAlert,
-  X,
 } from '@lucide/vue';
 
 const authStore = useAuthStore();
