@@ -1,28 +1,44 @@
 <template>
   <div class="min-h-screen bg-slate-50 relative flex flex-col justify-between overflow-x-hidden font-sans text-slate-800 selection:bg-blue-600 selection:text-white">
-    <!-- Right Dark Navy Wave Background (Matches Mockup) -->
-    <div class="hidden lg:block absolute top-0 right-0 w-[42%] xl:w-[40%] h-full bg-[#0B1528] z-0 overflow-hidden">
-      <!-- Subtle Radial Grid Pattern -->
-      <div class="absolute inset-0 opacity-15 bg-[radial-gradient(#38bdf8_1px,transparent_1px)] [background-size:24px_24px]"></div>
-      <div class="absolute -top-32 -right-32 w-96 h-96 bg-blue-600/15 rounded-full blur-3xl pointer-events-none"></div>
+    <!-- Right Dark Navy Wave Background (Smooth Rounded Gelombang) -->
+    <div class="hidden lg:block absolute top-0 right-0 w-[46%] xl:w-[42%] h-full z-0 overflow-hidden pointer-events-none">
+      <svg class="absolute top-0 right-0 h-full w-full" viewBox="0 0 500 1000" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="waveNavyGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#0E1E38" />
+            <stop offset="50%" stop-color="#0B1528" />
+            <stop offset="100%" stop-color="#070D1A" />
+          </linearGradient>
+        </defs>
 
-      <!-- Architectural subtle geometric lines -->
-      <svg class="absolute bottom-0 right-0 w-full h-full opacity-10 pointer-events-none" viewBox="0 0 500 800" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M100 800L350 300V0H500V800H100Z" fill="white" />
-        <line x1="150" y1="800" x2="380" y2="350" stroke="white" stroke-width="1.5" />
-        <line x1="220" y1="800" x2="420" y2="400" stroke="white" stroke-width="1.5" />
+        <!-- Secondary Soft Blue Ambient Underlay Wave -->
+        <path
+          d="M 20 0 C 80 250, 20 450, 80 700 C 120 850, 40 950, 80 1000 L 500 1000 L 500 0 Z"
+          fill="#1E3A8A"
+          opacity="0.25"
+        />
+
+        <!-- Primary Smooth Organic Gelombang Wave -->
+        <path
+          d="M 60 0 C 120 250, 50 480, 110 720 C 150 870, 70 950, 110 1000 L 500 1000 L 500 0 Z"
+          fill="url(#waveNavyGradient)"
+        />
+
+        <!-- Architectural subtle lines -->
+        <line x1="140" y1="0" x2="420" y2="1000" stroke="white" stroke-opacity="0.04" stroke-width="1.5" />
+        <line x1="240" y1="0" x2="480" y2="800" stroke="white" stroke-opacity="0.04" stroke-width="1.5" />
       </svg>
 
-      <!-- Right Tagline Accent Box (Visible to the right of login card) -->
-      <div class="absolute top-1/2 -translate-y-1/2 right-6 xl:right-12 flex items-center space-x-3 text-white/90 max-w-[170px] z-10">
-        <div class="w-1 h-14 bg-blue-500 rounded-full shrink-0"></div>
+      <!-- Right Tagline Accent Box -->
+      <div class="absolute top-1/2 -translate-y-1/2 right-6 xl:right-10 flex items-center space-x-3 text-white/90 max-w-[170px] z-10">
+        <div class="w-1 h-14 bg-blue-500 rounded-full shrink-0 shadow-sm shadow-blue-500/50"></div>
         <p class="text-xs font-medium leading-relaxed text-slate-300">
           Solusi ERP untuk bisnis yang lebih baik.
         </p>
       </div>
 
       <!-- Bottom Right Motto -->
-      <div class="absolute bottom-6 right-10 flex items-center space-x-2 text-xs font-medium text-slate-400 z-10">
+      <div class="absolute bottom-6 right-8 flex items-center space-x-2 text-xs font-medium text-slate-400 z-10">
         <span>Efisien</span>
         <span>&bull;</span>
         <span>Terukur</span>
@@ -53,10 +69,10 @@
     </header>
 
     <!-- Main Content Grid -->
-    <main class="relative z-10 w-full max-w-7xl mx-auto px-6 py-4 flex-1 flex items-center">
-      <div class="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-        <!-- LEFT COLUMN: Hero Typography, Features, & Laptop Preview (7 cols) -->
-        <div class="lg:col-span-7 space-y-6">
+    <main class="relative z-10 w-full max-w-7xl mx-auto px-6 py-2 flex-1 flex items-center">
+      <div class="w-full grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center">
+        <!-- LEFT COLUMN: Hero Typography, Features, & Realistic Laptop Preview (7 cols) -->
+        <div class="lg:col-span-7 space-y-5">
           <!-- Tagline Badge -->
           <div>
             <span class="text-[11px] font-extrabold tracking-[0.22em] text-blue-600 uppercase">
@@ -98,115 +114,33 @@
             </div>
           </div>
 
-          <!-- Laptop Preview + Hand-written Cursive Note Side by Side -->
-          <div class="relative pt-4 flex items-end">
-            <!-- 3D Perspective Laptop Screen Mockup -->
-            <div class="relative w-full max-w-[430px] rounded-t-2xl bg-slate-800 p-2 sm:p-2.5 shadow-2xl border border-slate-700">
-              <!-- Camera Dot -->
-              <div class="w-1.5 h-1.5 rounded-full bg-slate-900 border border-slate-600 mx-auto mb-1.5"></div>
+          <!-- High-Resolution Laptop Image Mockup + Cursive Handwriting Note -->
+          <div class="relative pt-1 max-w-xl">
+            <!-- Rendered Laptop Image with mix-blend-multiply to blend background seamlessly -->
+            <div class="relative w-full max-w-[460px] lg:max-w-[490px]">
+              <img
+                :src="laptopMockup"
+                alt="Mini ERP Dashboard on Laptop"
+                class="w-full h-auto object-contain drop-shadow-[0_15px_30px_rgba(15,23,42,0.14)] select-none transition-transform duration-500 hover:scale-[1.01]"
+              />
 
-              <!-- Screen Bezel & Dashboard UI Replica -->
-              <div class="bg-slate-50 rounded-lg overflow-hidden border border-slate-200 text-[10px] text-slate-700 aspect-[16/10] flex flex-col select-none">
-                <!-- Mini Dashboard Header -->
-                <div class="h-6 bg-white border-b border-slate-200 px-3 flex items-center justify-between">
-                  <div class="flex items-center space-x-1.5">
-                    <div class="w-2.5 h-2.5 rounded bg-blue-600 flex items-center justify-center text-[7px] text-white font-bold">M</div>
-                    <span class="font-bold text-[9px] text-slate-800">Mini ERP</span>
-                  </div>
-                  <div class="flex items-center space-x-1 bg-slate-100 px-1.5 py-0.5 rounded text-[8px] font-semibold text-slate-600">
-                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                    <span>Owner</span>
-                  </div>
-                </div>
-
-                <!-- Mini Dashboard Body (Sidebar + Content) -->
-                <div class="flex-1 flex overflow-hidden">
-                  <!-- Mini Sidebar -->
-                  <div class="w-20 bg-slate-900 text-slate-300 p-2 flex flex-col space-y-1 shrink-0">
-                    <div class="bg-blue-600 text-white rounded px-1.5 py-1 text-[8px] font-bold flex items-center space-x-1">
-                      <LayoutDashboard class="w-2.5 h-2.5" />
-                      <span>Dashboard</span>
-                    </div>
-                    <div class="px-1.5 py-0.5 text-[8px] text-slate-400 flex items-center space-x-1">
-                      <Package class="w-2.5 h-2.5" />
-                      <span>Master Data</span>
-                    </div>
-                    <div class="px-1.5 py-0.5 text-[8px] text-slate-400 flex items-center space-x-1">
-                      <ShoppingCart class="w-2.5 h-2.5" />
-                      <span>Transaksi</span>
-                    </div>
-                    <div class="px-1.5 py-0.5 text-[8px] text-slate-400 flex items-center space-x-1">
-                      <BarChart3 class="w-2.5 h-2.5" />
-                      <span>Laporan</span>
-                    </div>
-                  </div>
-
-                  <!-- Mini Dashboard Main Content Area -->
-                  <div class="flex-1 p-2 bg-slate-50 space-y-1.5 overflow-hidden flex flex-col justify-between">
-                    <div>
-                      <div class="font-bold text-[9px] text-slate-900 leading-tight">Selamat Datang,</div>
-                      <div class="text-[7px] text-slate-400">Kelola bisnis Anda dengan lebih mudah.</div>
-                    </div>
-
-                    <!-- 3 Mini Stats -->
-                    <div class="grid grid-cols-3 gap-1">
-                      <div class="bg-white p-1 rounded border border-slate-200/80 shadow-2xs">
-                        <div class="text-[6px] text-slate-400 font-medium">Tenant Aktif</div>
-                        <div class="text-[9px] font-extrabold text-slate-800">4</div>
-                      </div>
-                      <div class="bg-white p-1 rounded border border-slate-200/80 shadow-2xs">
-                        <div class="text-[6px] text-slate-400 font-medium">Pengguna</div>
-                        <div class="text-[9px] font-extrabold text-slate-800">12</div>
-                      </div>
-                      <div class="bg-white p-1 rounded border border-slate-200/80 shadow-2xs">
-                        <div class="text-[6px] text-slate-400 font-medium">Data Tersimpan</div>
-                        <div class="text-[9px] font-extrabold text-slate-800">1,250</div>
-                      </div>
-                    </div>
-
-                    <!-- Mini Bar Chart (Aktivitas Terbaru) -->
-                    <div class="bg-white p-1.5 rounded border border-slate-200/80 flex-1 flex flex-col justify-between">
-                      <div class="flex items-center justify-between">
-                        <span class="text-[7px] font-bold text-slate-800">Aktivitas Terbaru</span>
-                        <span class="text-[6px] text-slate-400 font-medium">7 Hari Terakhir</span>
-                      </div>
-                      <!-- Bar Columns -->
-                      <div class="flex items-end justify-between h-7 pt-1 px-1 gap-1">
-                        <div class="w-full bg-blue-200 rounded-t h-[30%]"></div>
-                        <div class="w-full bg-blue-300 rounded-t h-[45%]"></div>
-                        <div class="w-full bg-blue-400 rounded-t h-[35%]"></div>
-                        <div class="w-full bg-blue-500 rounded-t h-[70%]"></div>
-                        <div class="w-full bg-blue-600 rounded-t h-[85%]"></div>
-                        <div class="w-full bg-blue-500 rounded-t h-[60%]"></div>
-                        <div class="w-full bg-blue-600 rounded-t h-[100%]"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              <!-- Hand-written cursive callout positioned gracefully near the top-right of laptop -->
+              <div class="hidden sm:flex flex-col items-center absolute -top-2 -right-16 lg:-right-20 z-20 select-none pointer-events-none">
+                <span class="font-handwriting text-2xl lg:text-3xl text-slate-800 font-bold -rotate-6 leading-tight text-center">
+                  Dari Data<br />Menuju Pertumbuhan
+                </span>
+                <!-- Curved Doodle Arrow pointing towards laptop screen -->
+                <svg class="w-10 h-8 text-slate-700 mt-1 -rotate-6" viewBox="0 0 50 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M40 5 C 28 12, 18 18, 10 28" />
+                  <polyline points="18 24 9 28 14 35" />
+                </svg>
               </div>
-
-              <!-- Laptop Base & Lip -->
-              <div class="absolute -bottom-2.5 left-1/2 -translate-x-1/2 bg-slate-300 h-2.5 w-[108%] rounded-b-xl shadow-lg border-t border-slate-400 flex items-center justify-center">
-                <div class="w-14 h-1 bg-slate-400 rounded-full"></div>
-              </div>
-            </div>
-
-            <!-- Hand-written cursive callout with Arrow (Positioned cleanly beside laptop) -->
-            <div class="hidden sm:flex flex-col items-start ml-4 mb-10 shrink-0 z-20 select-none">
-              <span class="font-handwriting text-2xl text-slate-800 font-bold -rotate-6 leading-tight">
-                Dari Data<br />Menuju Pertumbuhan
-              </span>
-              <!-- Curved Doodle Arrow pointing left towards laptop screen -->
-              <svg class="w-10 h-8 text-slate-700 mt-1 ml-1" viewBox="0 0 50 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M40 5 C 30 15, 20 20, 8 26" />
-                <polyline points="15 22 7 26 12 33" />
-              </svg>
             </div>
           </div>
         </div>
 
-        <!-- RIGHT COLUMN: Floating Login Card (5 cols, overlapping on dark wave) -->
-        <div class="lg:col-span-5 flex justify-center lg:justify-start lg:-ml-6 xl:-ml-10">
+        <!-- RIGHT COLUMN: Floating Login Card (5 cols, overlapping over the gelombang wave) -->
+        <div class="lg:col-span-5 flex justify-center lg:justify-start lg:-ml-4 xl:-ml-8">
           <div class="bg-white rounded-[28px] p-6 sm:p-8 shadow-[0_25px_60px_-15px_rgba(8,15,30,0.18)] border border-slate-100 w-full max-w-[430px] relative z-20">
             <!-- Header inside card -->
             <div>
@@ -413,6 +347,7 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
+import laptopMockup from '../assets/laptop_mockup.png';
 import {
   Layers,
   BarChart3,
@@ -423,9 +358,6 @@ import {
   EyeOff,
   ArrowRight,
   AlertCircle,
-  LayoutDashboard,
-  Package,
-  ShoppingCart,
 } from '@lucide/vue';
 
 const authStore = useAuthStore();
