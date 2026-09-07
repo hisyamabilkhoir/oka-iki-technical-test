@@ -4,10 +4,13 @@
  * @returns {string}
  */
 export function formatCurrency(value) {
-  if (value === null || value === undefined || isNaN(value)) {
+  if (value === null || value === undefined || value === '') {
     return 'Rp 0';
   }
-  const num = typeof value === 'string' ? parseFloat(value) : value;
+  const num = typeof value === 'string' ? parseFloat(value) : Number(value);
+  if (isNaN(num) || !isFinite(num)) {
+    return 'Rp 0';
+  }
   return new Intl.NumberFormat('id-ID', {
     style: 'currency',
     currency: 'IDR',

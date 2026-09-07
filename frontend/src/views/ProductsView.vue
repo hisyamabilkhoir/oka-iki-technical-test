@@ -234,108 +234,132 @@
     </div>
 
     <!-- Create / Edit Modal -->
-    <div
-      v-if="showModal"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-    >
-      <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 relative">
-        <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
-          <h3 class="text-lg font-bold text-slate-900">
-            {{ isEditing ? 'Edit Produk' : 'Tambah Produk Baru' }}
-          </h3>
-          <button @click="showModal = false" class="text-slate-400 hover:text-slate-600">
-            <X class="w-5 h-5" />
-          </button>
+    <teleport to="body">
+      <transition
+        enter-active-class="transition duration-200 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition duration-150 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div
+          v-if="showModal"
+          class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto"
+          @click.self="showModal = false"
+        >
+          <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 relative my-8">
+            <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+              <h3 class="text-lg font-bold text-slate-900">
+                {{ isEditing ? 'Edit Produk' : 'Tambah Produk Baru' }}
+              </h3>
+              <button @click="showModal = false" class="text-slate-400 hover:text-slate-600 cursor-pointer">
+                <X class="w-5 h-5" />
+              </button>
+            </div>
+
+            <div v-if="modalError" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-xs">
+              {{ modalError }}
+            </div>
+
+            <form @submit.prevent="saveProduct" class="space-y-4">
+              <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1">
+                  Nama Produk <span class="text-red-500">*</span>
+                </label>
+                <input
+                  v-model="form.name"
+                  type="text"
+                  required
+                  placeholder="Contoh: Paket Lisensi ERP Cloud"
+                  class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1">
+                  Harga Satuan (IDR / Decimal) <span class="text-red-500">*</span>
+                </label>
+                <input
+                  v-model="form.price"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  required
+                  placeholder="Contoh: 1500000.00"
+                  class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+                <p class="text-[11px] text-slate-500 mt-1">
+                  Preview: <strong class="text-slate-700">{{ form.price ? formatCurrency(form.price) : 'Rp 0' }}</strong>
+                </p>
+              </div>
+
+              <div class="pt-3 border-t border-slate-100 flex items-center justify-end space-x-2">
+                <button
+                  type="button"
+                  @click="showModal = false"
+                  class="px-4 py-2 border border-slate-200 text-slate-600 text-xs font-semibold rounded-xl hover:bg-slate-50 cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  :disabled="submitting"
+                  class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl shadow-md shadow-indigo-600/20 disabled:opacity-50 cursor-pointer"
+                >
+                  {{ submitting ? 'Menyimpan...' : (isEditing ? 'Simpan Perubahan' : 'Tambah Produk') }}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-
-        <div v-if="modalError" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-xs">
-          {{ modalError }}
-        </div>
-
-        <form @submit.prevent="saveProduct" class="space-y-4">
-          <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1">
-              Nama Produk <span class="text-red-500">*</span>
-            </label>
-            <input
-              v-model="form.name"
-              type="text"
-              required
-              placeholder="Contoh: Paket Lisensi ERP Cloud"
-              class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-
-          <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1">
-              Harga Satuan (IDR / Decimal) <span class="text-red-500">*</span>
-            </label>
-            <input
-              v-model="form.price"
-              type="number"
-              step="0.01"
-              min="0.01"
-              required
-              placeholder="Contoh: 1500000.00"
-              class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-            <p class="text-[11px] text-slate-500 mt-1">
-              Preview: <strong class="text-slate-700">{{ formatCurrency(form.price) }}</strong>
-            </p>
-          </div>
-
-          <div class="pt-3 border-t border-slate-100 flex items-center justify-end space-x-2">
-            <button
-              type="button"
-              @click="showModal = false"
-              class="px-4 py-2 border border-slate-200 text-slate-600 text-xs font-semibold rounded-xl hover:bg-slate-50"
-            >
-              Batal
-            </button>
-            <button
-              type="submit"
-              :disabled="submitting"
-              class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl shadow-md shadow-indigo-600/20 disabled:opacity-50"
-            >
-              {{ submitting ? 'Menyimpan...' : (isEditing ? 'Simpan Perubahan' : 'Tambah Produk') }}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+      </transition>
+    </teleport>
 
     <!-- Confirm Delete Modal -->
-    <div
-      v-if="showDeleteModal"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-    >
-      <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 text-center">
-        <div class="w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4">
-          <Trash2 class="w-6 h-6" />
-        </div>
-        <h3 class="text-base font-bold text-slate-900">Konfirmasi Hapus Produk</h3>
-        <p class="text-xs text-slate-500 mt-2">
-          Apakah Anda yakin ingin menghapus produk <strong class="text-slate-800">"{{ deletingProduct?.name }}"</strong>?
-          Produk akan dihapus secara <em>Soft Delete</em> dan tidak lagi muncul pada katalog kasir baru.
-        </p>
+    <teleport to="body">
+      <transition
+        enter-active-class="transition duration-200 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition duration-150 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div
+          v-if="showDeleteModal"
+          class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto"
+          @click.self="showDeleteModal = false"
+        >
+          <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 text-center my-8">
+            <div class="w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4">
+              <Trash2 class="w-6 h-6" />
+            </div>
+            <h3 class="text-base font-bold text-slate-900">Konfirmasi Hapus Produk</h3>
+            <p class="text-xs text-slate-500 mt-2">
+              Apakah Anda yakin ingin menghapus produk <strong class="text-slate-800">"{{ deletingProduct?.name }}"</strong>?
+              Produk akan dihapus secara <em>Soft Delete</em> dan tidak lagi muncul pada katalog kasir baru.
+            </p>
 
-        <div class="mt-6 flex items-center justify-center space-x-2">
-          <button
-            @click="showDeleteModal = false"
-            class="px-4 py-2 border border-slate-200 text-slate-600 text-xs font-semibold rounded-xl hover:bg-slate-50"
-          >
-            Batal
-          </button>
-          <button
-            @click="handleDelete"
-            :disabled="submitting"
-            class="px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-xs font-semibold rounded-xl shadow-md shadow-red-600/20 disabled:opacity-50"
-          >
-            {{ submitting ? 'Menghapus...' : 'Ya, Hapus Produk' }}
-          </button>
+            <div class="mt-6 flex items-center justify-center space-x-2">
+              <button
+                @click="showDeleteModal = false"
+                class="px-4 py-2 border border-slate-200 text-slate-600 text-xs font-semibold rounded-xl hover:bg-slate-50 cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                @click="handleDelete"
+                :disabled="submitting"
+                class="px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-xs font-semibold rounded-xl shadow-md shadow-red-600/20 disabled:opacity-50 cursor-pointer"
+              >
+                {{ submitting ? 'Menghapus...' : 'Ya, Hapus Produk' }}
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+      </transition>
+    </teleport>
   </div>
 </template>
 
