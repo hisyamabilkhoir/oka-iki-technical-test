@@ -5,7 +5,7 @@
       class="bg-gradient-to-r from-[#edf2fe] via-[#e6edfd] to-[#dce6fc] rounded-3xl p-6 md:p-8 border border-blue-100/70 shadow-xs relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-6"
     >
       <!-- Left Content -->
-      <div class="relative z-10 flex-1 min-w-0 max-w-xl">
+      <div class="relative z-10 flex-1 min-w-0 max-w-2xl xl:max-w-3xl">
         <!-- Tenant Context Pill -->
         <div
           class="inline-flex items-center space-x-2 bg-white/90 text-indigo-700 text-xs font-medium px-3.5 py-1 rounded-full border border-indigo-200/70 shadow-2xs mb-3"
@@ -20,7 +20,7 @@
         </h1>
 
         <!-- Subtitle -->
-        <p class="text-slate-500 text-sm mt-2 leading-relaxed font-normal">
+        <p class="text-slate-500 text-sm mt-2 leading-relaxed font-normal max-w-2xl">
           Sistem Mini ERP SaaS aktif dengan isolasi data tenant yang terverifikasi. Kelola transaksi, produk, dan laporan dengan lebih mudah dan efisien.
         </p>
 
@@ -50,13 +50,13 @@
         <img
           :src="dashboardHeroImg"
           alt="Kelola Bisnis Lebih Mudah"
-          class="h-44 sm:h-52 md:h-60 lg:h-64 w-auto object-contain select-none pointer-events-none drop-shadow-sm"
+          class="h-44 sm:h-52 md:h-60 lg:h-64 xl:h-72 w-auto object-contain select-none pointer-events-none drop-shadow-sm"
         />
       </div>
     </div>
 
     <!-- 4 Metric Stat Cards Grid -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
       <!-- Card 1: Katalog Produk -->
       <router-link
         to="/products"

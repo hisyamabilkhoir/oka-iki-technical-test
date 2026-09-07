@@ -193,8 +193,8 @@
       </header>
 
       <!-- Page Content -->
-      <main class="flex-1 overflow-y-auto p-4 md:p-8">
-        <div class="max-w-7xl mx-auto">
+      <main class="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+        <div class="w-full max-w-[1720px] mx-auto">
           <router-view />
         </div>
       </main>
