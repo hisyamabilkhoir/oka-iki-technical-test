@@ -39,7 +39,7 @@
     </div>
 
     <!-- TAB 1: CHECKOUT / KASIR -->
-    <div v-if="activeTab === 'checkout'" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <div v-if="activeTab === 'checkout'" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
       <!-- Left Column: Product Selection Grid (7 cols) -->
       <div class="lg:col-span-7 space-y-4">
         <!-- Search bar -->
