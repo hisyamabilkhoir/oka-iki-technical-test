@@ -1,0 +1,11 @@
+# Root .gitignore
+**/node_modules/
+**/vendor/
+**/.env
+**/.env.backup
+**/.env.production
+**/storage/*.key
+**/dist/
+.phpunit.result.cache
+.DS_Store
+Thumbs.db
