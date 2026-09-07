@@ -340,10 +340,12 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useAuthStore } from '../stores/auth';
-import api from '../api/axios';
+import { productService, transactionService, reportService } from '../services';
+import { useClientPagination } from '../composables/useClientPagination';
 import { formatCurrency, formatDate } from '../utils/formatters';
+import { ROLES } from '../constants/roles';
 import dashboardHeroImg from '../assets/dashboard_hero.png';
 import ReceiptModal from '../components/ReceiptModal.vue';
 import PaginationControls from '../components/PaginationControls.vue';
@@ -376,16 +378,7 @@ const recentTransactions = ref([]);
 const trxSearch = ref('');
 const trxRoleFilter = ref('');
 
-// Pagination state for Transactions Table
-const trxPagination = reactive({
-  currentPage: 1,
-  lastPage: 1,
-  total: 0,
-  from: 0,
-  to: 0,
-  perPage: 5,
-});
-
+// Receipt Modal State
 const showReceiptModal = ref(false);
 const currentReceipt = ref(null);
 
@@ -411,70 +404,45 @@ const filteredTransactions = computed(() => {
   return list;
 });
 
-// Slice according to client pagination
-const paginatedTransactions = computed(() => {
-  const start = (trxPagination.currentPage - 1) * trxPagination.perPage;
-  return filteredTransactions.value.slice(start, start + trxPagination.perPage);
+// Clean Reusable Client Pagination Composable
+const trxPagination = useClientPagination(filteredTransactions, { initialPerPage: 5 });
+const paginatedTransactions = trxPagination.paginatedItems;
+
+// Reset page to 1 when filters change
+watch([trxSearch, trxRoleFilter], () => {
+  trxPagination.reset();
 });
 
-function updateTrxPaginationMeta() {
-  const total = filteredTransactions.value.length;
-  trxPagination.total = total;
-  trxPagination.lastPage = Math.max(1, Math.ceil(total / trxPagination.perPage));
-  if (trxPagination.currentPage > trxPagination.lastPage) {
-    trxPagination.currentPage = trxPagination.lastPage;
-  }
-  if (total === 0) {
-    trxPagination.from = 0;
-    trxPagination.to = 0;
-  } else {
-    trxPagination.from = (trxPagination.currentPage - 1) * trxPagination.perPage + 1;
-    trxPagination.to = Math.min(trxPagination.currentPage * trxPagination.perPage, total);
-  }
-}
-
 function handleTrxFilter() {
-  trxPagination.currentPage = 1;
-  updateTrxPaginationMeta();
-}
-
-function resetTrxFilter() {
-  trxSearch.value = '';
-  trxRoleFilter.value = '';
-  trxPagination.currentPage = 1;
-  updateTrxPaginationMeta();
+  trxPagination.reset();
 }
 
 function onTrxPageChange(page) {
-  trxPagination.currentPage = page;
-  updateTrxPaginationMeta();
+  trxPagination.setPage(page);
 }
 
 function onTrxPerPageChange(newPerPage) {
-  trxPagination.perPage = newPerPage;
-  trxPagination.currentPage = 1;
-  updateTrxPaginationMeta();
+  trxPagination.setPerPage(newPerPage);
 }
 
 async function loadDashboardData() {
   loading.value = true;
   try {
-    // 1. Fetch products count
-    const prodRes = await api.get('/products?per_page=1');
-    productCount.value = prodRes.data.meta?.total || prodRes.data.data?.length || 0;
+    // 1. Fetch products count using ProductService
+    const prodRes = await productService.getProducts({ per_page: 1 });
+    productCount.value = prodRes.meta?.total || prodRes.data?.length || 0;
 
-    // 2. Fetch transactions (fetch up to 100 for responsive client filtering & pagination)
-    const trxRes = await api.get('/transactions?per_page=100');
-    recentTransactions.value = trxRes.data.data || [];
-    updateTrxPaginationMeta();
+    // 2. Fetch transactions using TransactionService (up to 100 for responsive client filtering)
+    const trxRes = await transactionService.getTransactions({ per_page: 100 });
+    recentTransactions.value = trxRes.data || [];
 
-    // 3. Fetch reports if owner
+    // 3. Fetch reports if owner using ReportService
     if (authStore.isOwner) {
-      const reportRes = await api.get('/reports');
-      monthlyTransactionsCount.value = reportRes.data.data?.current_month?.total_transactions || 0;
-      monthlyRevenue.value = reportRes.data.data?.current_month?.total_revenue || 0;
+      const reportRes = await reportService.getReports();
+      monthlyTransactionsCount.value = reportRes.data?.current_month?.total_transactions || 0;
+      monthlyRevenue.value = reportRes.data?.current_month?.total_revenue || 0;
     } else {
-      monthlyTransactionsCount.value = trxRes.data.meta?.total || recentTransactions.value.length;
+      monthlyTransactionsCount.value = trxRes.meta?.total || recentTransactions.value.length;
       monthlyRevenue.value = 0;
     }
   } catch (err) {

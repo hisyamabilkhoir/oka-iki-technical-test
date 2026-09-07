@@ -420,7 +420,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue';
 import { useAuthStore } from '../stores/auth';
-import api from '../api/axios';
+import { productService, transactionService } from '../services';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import ReceiptModal from '../components/ReceiptModal.vue';
 import PaginationControls from '../components/PaginationControls.vue';
@@ -494,8 +494,8 @@ const calculatedTotal = computed(() => {
 async function fetchProducts() {
   loadingProducts.value = true;
   try {
-    const res = await api.get('/products?per_page=100');
-    products.value = res.data.data || [];
+    const res = await productService.getProducts({ per_page: 100 });
+    products.value = res.data || [];
   } catch (err) {
     console.error('Failed to load products', err);
   } finally {
@@ -556,11 +556,11 @@ async function fetchHistory(page = historyPagination.currentPage) {
       params.end_date = historyEndDate.value;
     }
 
-    const res = await api.get('/transactions', { params });
-    historyTransactions.value = res.data.data || [];
+    const res = await transactionService.getTransactions(params);
+    historyTransactions.value = res.data || [];
 
     // Capture meta pagination
-    const meta = res.data.meta;
+    const meta = res.meta;
     if (meta) {
       historyPagination.currentPage = meta.current_page || 1;
       historyPagination.lastPage = meta.last_page || 1;
@@ -628,8 +628,8 @@ async function handleCheckout() {
       })),
     };
 
-    const res = await api.post('/transactions', payload);
-    const createdTrx = res.data.transaction;
+    const res = await transactionService.createTransaction(payload);
+    const createdTrx = res.transaction;
 
     // Reset cart
     cart.value = [];

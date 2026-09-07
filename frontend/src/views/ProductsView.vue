@@ -366,7 +366,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
 import { useAuthStore } from '../stores/auth';
-import api from '../api/axios';
+import { productService } from '../services';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import PaginationControls from '../components/PaginationControls.vue';
 import {
@@ -469,11 +469,11 @@ async function fetchProducts(page = pagination.currentPage) {
       params.max_price = maxPrice.value;
     }
 
-    const response = await api.get('/products', { params });
-    products.value = response.data.data || [];
+    const response = await productService.getProducts(params);
+    products.value = response.data || [];
 
     // Capture meta pagination
-    const meta = response.data.meta;
+    const meta = response.meta;
     if (meta) {
       pagination.currentPage = meta.current_page || 1;
       pagination.lastPage = meta.last_page || 1;
@@ -518,9 +518,9 @@ async function saveProduct() {
   modalError.value = null;
   try {
     if (isEditing.value) {
-      await api.put(`/products/${currentId.value}`, form);
+      await productService.updateProduct(currentId.value, form);
     } else {
-      await api.post('/products', form);
+      await productService.createProduct(form);
     }
     showModal.value = false;
     await fetchProducts();
@@ -540,7 +540,7 @@ async function handleDelete() {
   if (!deletingProduct.value) return;
   submitting.value = true;
   try {
-    await api.delete(`/products/${deletingProduct.value.id}`);
+    await productService.deleteProduct(deletingProduct.value.id);
     showDeleteModal.value = false;
     await fetchProducts();
   } catch (err) {

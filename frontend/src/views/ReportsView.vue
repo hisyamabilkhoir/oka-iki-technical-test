@@ -386,13 +386,13 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted, watch } from 'vue';
 import { useAuthStore } from '../stores/auth';
-import api from '../api/axios';
+import { reportService } from '../services';
+import { useClientPagination } from '../composables/useClientPagination';
 import { formatCurrency, formatDate } from '../utils/formatters';
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import ExcelJS from 'exceljs';
+import { exportReportToPdf } from '../utils/reportPdfExporter';
+import { exportReportToExcel } from '../utils/reportExcelExporter';
 import PaginationControls from '../components/PaginationControls.vue';
 import {
   ShieldCheck,
@@ -416,72 +416,34 @@ const filters = reactive({
 
 // Daily Breakdown Search & Pagination
 const dailySearch = ref('');
-const dailyPagination = reactive({
-  currentPage: 1,
-  lastPage: 1,
-  total: 0,
-  from: 0,
-  to: 0,
-  perPage: 5,
-});
-
 const filteredDailyBreakdown = computed(() => {
   const list = reportData.value?.daily_breakdown || [];
   if (!dailySearch.value.trim()) return list;
   const q = dailySearch.value.trim().toLowerCase();
-  return list.filter((d) => {
-    return (d.transaction_date || '').toLowerCase().includes(q);
-  });
+  return list.filter((d) => (d.transaction_date || '').toLowerCase().includes(q));
 });
 
-const paginatedDailyBreakdown = computed(() => {
-  const start = (dailyPagination.currentPage - 1) * dailyPagination.perPage;
-  return filteredDailyBreakdown.value.slice(start, start + dailyPagination.perPage);
-});
+const dailyPagination = useClientPagination(filteredDailyBreakdown, { initialPerPage: 5 });
+const paginatedDailyBreakdown = dailyPagination.paginatedItems;
 
-function updateDailyPaginationMeta() {
-  const total = filteredDailyBreakdown.value.length;
-  dailyPagination.total = total;
-  dailyPagination.lastPage = Math.max(1, Math.ceil(total / dailyPagination.perPage));
-  if (dailyPagination.currentPage > dailyPagination.lastPage) {
-    dailyPagination.currentPage = dailyPagination.lastPage;
-  }
-  if (total === 0) {
-    dailyPagination.from = 0;
-    dailyPagination.to = 0;
-  } else {
-    dailyPagination.from = (dailyPagination.currentPage - 1) * dailyPagination.perPage + 1;
-    dailyPagination.to = Math.min(dailyPagination.currentPage * dailyPagination.perPage, total);
-  }
-}
+watch(dailySearch, () => {
+  dailyPagination.reset();
+});
 
 function handleDailyFilter() {
-  dailyPagination.currentPage = 1;
-  updateDailyPaginationMeta();
+  dailyPagination.reset();
 }
 
 function onDailyPageChange(page) {
-  dailyPagination.currentPage = page;
-  updateDailyPaginationMeta();
+  dailyPagination.setPage(page);
 }
 
 function onDailyPerPageChange(newPerPage) {
-  dailyPagination.perPage = newPerPage;
-  dailyPagination.currentPage = 1;
-  updateDailyPaginationMeta();
+  dailyPagination.setPerPage(newPerPage);
 }
 
 // Related Transactions Search & Pagination
 const relatedTrxSearch = ref('');
-const relatedPagination = reactive({
-  currentPage: 1,
-  lastPage: 1,
-  total: 0,
-  from: 0,
-  to: 0,
-  perPage: 5,
-});
-
 const filteredRelatedTransactions = computed(() => {
   const list = reportData.value?.recent_transactions || [];
   if (!relatedTrxSearch.value.trim()) return list;
@@ -493,41 +455,23 @@ const filteredRelatedTransactions = computed(() => {
   });
 });
 
-const paginatedRelatedTransactions = computed(() => {
-  const start = (relatedPagination.currentPage - 1) * relatedPagination.perPage;
-  return filteredRelatedTransactions.value.slice(start, start + relatedPagination.perPage);
+const relatedPagination = useClientPagination(filteredRelatedTransactions, { initialPerPage: 5 });
+const paginatedRelatedTransactions = relatedPagination.paginatedItems;
+
+watch(relatedTrxSearch, () => {
+  relatedPagination.reset();
 });
 
-function updateRelatedPaginationMeta() {
-  const total = filteredRelatedTransactions.value.length;
-  relatedPagination.total = total;
-  relatedPagination.lastPage = Math.max(1, Math.ceil(total / relatedPagination.perPage));
-  if (relatedPagination.currentPage > relatedPagination.lastPage) {
-    relatedPagination.currentPage = relatedPagination.lastPage;
-  }
-  if (total === 0) {
-    relatedPagination.from = 0;
-    relatedPagination.to = 0;
-  } else {
-    relatedPagination.from = (relatedPagination.currentPage - 1) * relatedPagination.perPage + 1;
-    relatedPagination.to = Math.min(relatedPagination.currentPage * relatedPagination.perPage, total);
-  }
-}
-
 function handleRelatedFilter() {
-  relatedPagination.currentPage = 1;
-  updateRelatedPaginationMeta();
+  relatedPagination.reset();
 }
 
 function onRelatedPageChange(page) {
-  relatedPagination.currentPage = page;
-  updateRelatedPaginationMeta();
+  relatedPagination.setPage(page);
 }
 
 function onRelatedPerPageChange(newPerPage) {
-  relatedPagination.perPage = newPerPage;
-  relatedPagination.currentPage = 1;
-  updateRelatedPaginationMeta();
+  relatedPagination.setPerPage(newPerPage);
 }
 
 const printDateTimeString = computed(() => {
@@ -579,10 +523,10 @@ async function loadReport() {
     if (filters.startDate) params.start_date = filters.startDate;
     if (filters.endDate) params.end_date = filters.endDate;
 
-    const res = await api.get('/reports', { params });
-    reportData.value = res.data.data;
-    updateDailyPaginationMeta();
-    updateRelatedPaginationMeta();
+    const res = await reportService.getReports(params);
+    reportData.value = res.data;
+    dailyPagination.reset();
+    relatedPagination.reset();
   } catch (err) {
     console.error('Failed to load reports', err);
   } finally {
@@ -591,682 +535,35 @@ async function loadReport() {
 }
 
 /**
- * Download Clean & Formal PDF Report using jsPDF + autoTable
+ * Download Clean & Formal PDF Report
  */
 function downloadPdf() {
-  if (!reportData.value) return;
-
-  const doc = new jsPDF({
-    orientation: 'portrait',
-    unit: 'mm',
-    format: 'a4',
+  exportReportToPdf({
+    reportData: reportData.value,
+    tenantName: authStore.tenant?.name,
+    tenantId: authStore.tenant?.id,
+    userName: authStore.user?.name,
+    startDate: filters.startDate || reportData.value?.period?.start_date,
+    endDate: filters.endDate || reportData.value?.period?.end_date,
+    totalCalculatedTrx: totalCalculatedTrx.value,
+    totalCalculatedRevenue: totalCalculatedRevenue.value,
   });
-
-  const tenantName = authStore.tenant?.name || 'Tenant';
-  const tenantId = authStore.tenant?.id || '1';
-  const userName = authStore.user?.name || 'Owner';
-  const startDate = filters.startDate || reportData.value.period?.start_date || '-';
-  const endDate = filters.endDate || reportData.value.period?.end_date || '-';
-  const currentDateStr = new Date().toLocaleString('id-ID', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  });
-
-  // Top Indigo Accent Line
-  doc.setFillColor(30, 58, 138); // Navy #1E3A8A
-  doc.rect(0, 0, 210, 5, 'F');
-
-  // Tenant Title Header
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(16);
-  doc.setTextColor(15, 23, 42); // slate-900
-  doc.text(tenantName.toUpperCase(), 14, 16);
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
-  doc.setTextColor(100, 116, 139); // slate-500
-  doc.text('Mini ERP SaaS Multi-Tenant • Dokumen Laporan Omzet Resmi', 14, 21);
-
-  // Status Badge / Metadata Block
-  doc.setFontSize(8.5);
-  doc.setTextColor(71, 85, 105);
-  doc.text(`Periode: ${formatDate(startDate)} s/d ${formatDate(endDate)}`, 14, 27);
-  doc.text(`Dicetak: ${currentDateStr} WIB | Oleh: ${userName} (Owner)`, 14, 32);
-  doc.text(`Tenant ID: #${tenantId} | Isolasi Data: Terverifikasi Multi-Tenant`, 14, 37);
-
-  // Divider Line
-  doc.setDrawColor(226, 232, 240); // slate-200
-  doc.setLineWidth(0.5);
-  doc.line(14, 40, 196, 40);
-
-  // 1. Executive Summary Table
-  const totalOmzet = formatCurrency(reportData.value.filtered_summary?.total_revenue || 0);
-  const totalTrx = (reportData.value.filtered_summary?.total_transactions || 0) + ' Transaksi';
-  const aov = formatCurrency(reportData.value.filtered_summary?.avg_order_value || 0);
-  const mtdOmzet = formatCurrency(reportData.value.current_month?.total_revenue || 0);
-
-  autoTable(doc, {
-    startY: 44,
-    theme: 'grid',
-    head: [['RINGKASAN EKSEKUTIF (KPI)', 'NILAI']],
-    body: [
-      ['Total Omzet Periode Terpilih', totalOmzet],
-      ['Total Transaksi Periode Terpilih', totalTrx],
-      ['Rata-rata Nilai per Transaksi (AOV)', aov],
-      ['Omzet Bulan Berjalan (MTD)', mtdOmzet],
-    ],
-    headStyles: {
-      fillColor: [30, 58, 138],
-      textColor: [255, 255, 255],
-      fontSize: 9,
-      fontStyle: 'bold',
-      halign: 'left',
-    },
-    styles: {
-      fontSize: 8.5,
-      textColor: [30, 41, 59],
-      cellPadding: 3,
-    },
-    columnStyles: {
-      0: { cellWidth: 120, fontStyle: 'bold' },
-      1: { cellWidth: 62, halign: 'right', fontStyle: 'bold', textColor: [67, 56, 202] },
-    },
-    margin: { left: 14, right: 14 },
-  });
-
-  // 2. Daily Breakdown Table
-  let currentY = doc.lastAutoTable.finalY + 8;
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10);
-  doc.setTextColor(15, 23, 42);
-  doc.text('1. Agregasi Omzet Harian (Database-Level Grouping)', 14, currentY);
-
-  const dailyRows = (reportData.value.daily_breakdown || []).map((item, idx) => [
-    idx + 1,
-    formatDate(item.transaction_date),
-    item.transaction_count + ' Trx',
-    formatCurrency(item.daily_revenue),
-  ]);
-
-  dailyRows.push([
-    'TOTAL',
-    'Semua Hari',
-    totalCalculatedTrx.value + ' Trx',
-    formatCurrency(totalCalculatedRevenue.value),
-  ]);
-
-  autoTable(doc, {
-    startY: currentY + 3,
-    theme: 'striped',
-    head: [['No', 'Tanggal', 'Jumlah Transaksi', 'Total Omzet Harian']],
-    body: dailyRows,
-    headStyles: {
-      fillColor: [51, 65, 85], // slate-700
-      textColor: [255, 255, 255],
-      fontSize: 8.5,
-      fontStyle: 'bold',
-    },
-    styles: {
-      fontSize: 8,
-      textColor: [51, 65, 85],
-      cellPadding: 2.5,
-    },
-    columnStyles: {
-      0: { halign: 'center', cellWidth: 12 },
-      1: { cellWidth: 60, fontStyle: 'bold' },
-      2: { halign: 'center', cellWidth: 40 },
-      3: { halign: 'right', cellWidth: 70, fontStyle: 'bold', textColor: [67, 56, 202] },
-    },
-    margin: { left: 14, right: 14 },
-  });
-
-  // 3. Transactions Detail Table
-  currentY = doc.lastAutoTable.finalY + 8;
-  if (currentY > 230) {
-    doc.addPage();
-    currentY = 20;
-  }
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10);
-  doc.setTextColor(15, 23, 42);
-  doc.text('2. Rincian Transaksi Terkait Periode Filter', 14, currentY);
-
-  const trxRows = (reportData.value.recent_transactions || []).map((trx, idx) => [
-    idx + 1,
-    trx.transaction_code,
-    formatDate(trx.transaction_date),
-    trx.user?.name || 'Kasir',
-    formatCurrency(trx.total),
-  ]);
-
-  autoTable(doc, {
-    startY: currentY + 3,
-    theme: 'striped',
-    head: [['No', 'Kode Transaksi', 'Tanggal', 'Kasir / Petugas', 'Total Transaksi']],
-    body: trxRows,
-    headStyles: {
-      fillColor: [51, 65, 85],
-      textColor: [255, 255, 255],
-      fontSize: 8.5,
-      fontStyle: 'bold',
-    },
-    styles: {
-      fontSize: 8,
-      textColor: [51, 65, 85],
-      cellPadding: 2.5,
-    },
-    columnStyles: {
-      0: { halign: 'center', cellWidth: 12 },
-      1: { cellWidth: 55, fontStyle: 'bold' },
-      2: { cellWidth: 35 },
-      3: { cellWidth: 40 },
-      4: { halign: 'right', cellWidth: 40, fontStyle: 'bold' },
-    },
-    margin: { left: 14, right: 14 },
-  });
-
-  // Signatures & Integrity Footer
-  let finalY = doc.lastAutoTable.finalY + 12;
-  if (finalY > 245) {
-    doc.addPage();
-    finalY = 25;
-  }
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7.5);
-  doc.setTextColor(148, 163, 184); // slate-400
-  doc.text(
-    'Data di atas dihasilkan otomatis oleh Sistem Mini ERP SaaS PT Oka Iki Indonesia dengan isolasi database multi-tenant terverifikasi.',
-    14,
-    finalY
-  );
-
-  // Signature Block
-  const sigY = finalY + 8;
-  doc.setFontSize(8.5);
-  doc.setTextColor(71, 85, 105);
-  doc.text('Dibuat & Diverifikasi:', 25, sigY);
-  doc.text('Mengetahui / Pimpinan:', 135, sigY);
-
-  doc.setFont('helvetica', 'bold');
-  doc.text(userName, 25, sigY + 18);
-  doc.text('( Owner / Direksi )', 135, sigY + 18);
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7.5);
-  doc.text('Kasir / Owner Tenant', 25, sigY + 22);
-  doc.text(tenantName, 135, sigY + 22);
-
-  // Add Page Numbers
-  const pageCount = doc.internal.getNumberOfPages();
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
-    doc.setFontSize(7.5);
-    doc.setTextColor(148, 163, 184);
-    doc.text(`Halaman ${i} dari ${pageCount} • PT Oka Iki Indonesia Technical Test`, 105, 292, { align: 'center' });
-  }
-
-  const cleanFilename = `Laporan_Omzet_${tenantName.replace(/[^a-zA-Z0-9]/g, '_')}_${startDate}_sd_${endDate}.pdf`;
-  doc.save(cleanFilename);
 }
 
 /**
- * Download Executive Styled Excel Spreadsheet (.xlsx) using ExcelJS
+ * Download Executive Styled Excel Spreadsheet (.xlsx)
  */
 async function downloadExcel() {
-  if (!reportData.value) return;
-
-  const tenantName = authStore.tenant?.name || 'Tenant';
-  const tenantId = authStore.tenant?.id || '1';
-  const userName = authStore.user?.name || 'Owner';
-  const startDate = filters.startDate || reportData.value.period?.start_date || '-';
-  const endDate = filters.endDate || reportData.value.period?.end_date || '-';
-  const currentDateStr = new Date().toLocaleString('id-ID');
-
-  const wb = new ExcelJS.Workbook();
-  wb.creator = 'PT Oka Iki Indonesia';
-  wb.lastModifiedBy = userName;
-  wb.created = new Date();
-  wb.modified = new Date();
-
-  // Color & Border Palette
-  const navyFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } };
-  const indigoFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4338CA' } };
-  const slateSubFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
-  const metaHeaderFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } };
-  const sectionFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } };
-  const tableHeaderFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2563EB' } };
-  const zebraFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
-  const totalRowFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEEF2FF' } };
-
-  const thinBorder = {
-    top: { style: 'thin', color: { argb: 'FFCBD5E1' } },
-    left: { style: 'thin', color: { argb: 'FFCBD5E1' } },
-    bottom: { style: 'thin', color: { argb: 'FFCBD5E1' } },
-    right: { style: 'thin', color: { argb: 'FFCBD5E1' } },
-  };
-
-  const totalBorder = {
-    top: { style: 'thin', color: { argb: 'FF94A3B8' } },
-    bottom: { style: 'double', color: { argb: 'FF1E3A8A' } },
-    left: { style: 'thin', color: { argb: 'FFCBD5E1' } },
-    right: { style: 'thin', color: { argb: 'FFCBD5E1' } },
-  };
-
-  // -------------------------------------------------------------
-  // SHEET 1: RINGKASAN & HARIAN
-  // -------------------------------------------------------------
-  const ws1 = wb.addWorksheet('Ringkasan & Harian', {
-    views: [{ showGridLines: true }],
+  await exportReportToExcel({
+    reportData: reportData.value,
+    tenantName: authStore.tenant?.name,
+    tenantId: authStore.tenant?.id,
+    userName: authStore.user?.name,
+    startDate: filters.startDate || reportData.value?.period?.start_date,
+    endDate: filters.endDate || reportData.value?.period?.end_date,
+    totalCalculatedTrx: totalCalculatedTrx.value,
+    totalCalculatedRevenue: totalCalculatedRevenue.value,
   });
-
-  // Column definitions with generous widths
-  ws1.columns = [
-    { width: 4 },  // A: Spacer
-    { width: 36 }, // B: Indikator / Tanggal
-    { width: 22 }, // C: Jumlah Trx / Nilai
-    { width: 32 }, // D: Total Omzet Rp / Keterangan
-    { width: 22 }, // E: Status
-  ];
-
-  // 1. BRAND HEADER BANNER
-  ws1.mergeCells('B1:E1');
-  const b1 = ws1.getCell('B1');
-  b1.value = 'PT OKA IKI INDONESIA';
-  b1.font = { name: 'Calibri', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
-  b1.alignment = { horizontal: 'center', vertical: 'middle' };
-  b1.fill = navyFill;
-  ws1.getRow(1).height = 28;
-
-  ws1.mergeCells('B2:E2');
-  const b2 = ws1.getCell('B2');
-  b2.value = 'LAPORAN RESMI EKSEKUTIF OMZET & PENDAPATAN';
-  b2.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
-  b2.alignment = { horizontal: 'center', vertical: 'middle' };
-  b2.fill = indigoFill;
-  ws1.getRow(2).height = 22;
-
-  ws1.mergeCells('B3:E3');
-  const b3 = ws1.getCell('B3');
-  b3.value = 'Mini ERP SaaS Enterprise • Multi-Tenant Data Isolation • Dokumen Sah & Rahasia';
-  b3.font = { name: 'Calibri', size: 9, italic: true, color: { argb: 'FF475569' } };
-  b3.alignment = { horizontal: 'center', vertical: 'middle' };
-  b3.fill = slateSubFill;
-  ws1.getRow(3).height = 18;
-
-  ws1.getRow(4).height = 8;
-
-  // 2. METADATA IDENTITAS TENANT
-  const metaRows = [
-    { k1: 'NAMA TENANT', v1: tenantName, k2: 'PERIODE LAPORAN', v2: `${startDate} s/d ${endDate}` },
-    { k1: 'TENANT ID', v1: `#${tenantId} (Isolated Multi-Tenant)`, k2: 'TANGGAL UNDUH', v2: `${currentDateStr} WIB` },
-    { k1: 'DIUNDUH OLEH', v1: `${userName} (Owner)`, k2: 'STATUS DATA', v2: 'Terverifikasi Valid & Terkunci' }
-  ];
-
-  metaRows.forEach((m, idx) => {
-    const r = 5 + idx;
-    ws1.getRow(r).height = 20;
-
-    const cellK1 = ws1.getCell(`B${r}`);
-    cellK1.value = m.k1;
-    cellK1.font = { name: 'Calibri', size: 9, bold: true, color: { argb: 'FF334155' } };
-    cellK1.fill = metaHeaderFill;
-    cellK1.alignment = { horizontal: 'right', vertical: 'middle' };
-    cellK1.border = thinBorder;
-
-    const cellV1 = ws1.getCell(`C${r}`);
-    cellV1.value = m.v1;
-    cellV1.font = { name: 'Calibri', size: 10, bold: idx === 0, color: idx === 0 ? { argb: 'FF1D4ED8' } : { argb: 'FF0F172A' } };
-    cellV1.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
-    cellV1.border = thinBorder;
-
-    const cellK2 = ws1.getCell(`D${r}`);
-    cellK2.value = m.k2;
-    cellK2.font = { name: 'Calibri', size: 9, bold: true, color: { argb: 'FF334155' } };
-    cellK2.fill = metaHeaderFill;
-    cellK2.alignment = { horizontal: 'right', vertical: 'middle' };
-    cellK2.border = thinBorder;
-
-    const cellV2 = ws1.getCell(`E${r}`);
-    cellV2.value = m.v2;
-    cellV2.font = { name: 'Calibri', size: 10, bold: true, color: idx === 2 ? { argb: 'FF15803D' } : { argb: 'FF0F172A' } };
-    cellV2.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
-    cellV2.border = thinBorder;
-  });
-
-  ws1.getRow(8).height = 12;
-
-  // 3. RINGKASAN EKSEKUTIF (KPI)
-  ws1.mergeCells('B9:E9');
-  const kpiTitle = ws1.getCell('B9');
-  kpiTitle.value = 'I. RINGKASAN EKSEKUTIF INDIKATOR FINANSIAL & OPERASIONAL (KPI)';
-  kpiTitle.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FFFFFFFF' } };
-  kpiTitle.fill = sectionFill;
-  kpiTitle.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
-  ws1.getRow(9).height = 24;
-
-  const kpiData = [
-    { label: 'Total Omzet Periode Terpilih (Gross Revenue)', val: Number(reportData.value.filtered_summary?.total_revenue || 0), fmt: '"Rp"#,##0', isBold: true, color: 'FF047857' },
-    { label: 'Total Volume Transaksi Terpilih', val: Number(reportData.value.filtered_summary?.total_transactions || 0), fmt: '#,##0 " Transaksi"', isBold: true, color: 'FF0F172A' },
-    { label: 'Rata-rata Nilai per Transaksi (AOV / Basket Size)', val: Number(reportData.value.filtered_summary?.avg_order_value || 0), fmt: '"Rp"#,##0', isBold: false, color: 'FF0F172A' },
-    { label: 'Omzet Akumulasi Bulan Berjalan (MTD)', val: Number(reportData.value.current_month?.total_revenue || 0), fmt: '"Rp"#,##0', isBold: false, color: 'FF0F172A' },
-    { label: 'Total Transaksi Bulan Berjalan (MTD)', val: Number(reportData.value.current_month?.total_transactions || 0), fmt: '#,##0 " Transaksi"', isBold: false, color: 'FF0F172A' },
-  ];
-
-  kpiData.forEach((k, idx) => {
-    const r = 10 + idx;
-    ws1.getRow(r).height = 20;
-
-    ws1.mergeCells(`B${r}:C${r}`);
-    const lblCell = ws1.getCell(`B${r}`);
-    lblCell.value = k.label;
-    lblCell.font = { name: 'Calibri', size: 10, color: { argb: 'FF1E293B' } };
-    lblCell.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
-    lblCell.fill = idx % 2 === 1 ? zebraFill : { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } };
-    lblCell.border = thinBorder;
-    ws1.getCell(`C${r}`).border = thinBorder;
-
-    ws1.mergeCells(`D${r}:E${r}`);
-    const valCell = ws1.getCell(`D${r}`);
-    valCell.value = k.val;
-    valCell.numFmt = k.fmt;
-    valCell.font = { name: 'Calibri', size: 10, bold: k.isBold, color: { argb: k.color } };
-    valCell.alignment = { horizontal: 'right', vertical: 'middle' };
-    valCell.fill = idx % 2 === 1 ? zebraFill : { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } };
-    valCell.border = thinBorder;
-    ws1.getCell(`E${r}`).border = thinBorder;
-  });
-
-  ws1.getRow(15).height = 12;
-
-  // 4. AGREGASI OMZET HARIAN
-  ws1.mergeCells('B16:E16');
-  const dailyTitle = ws1.getCell('B16');
-  dailyTitle.value = 'II. TABEL AGREGASI OMZET HARIAN OPERASIONAL';
-  dailyTitle.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FFFFFFFF' } };
-  dailyTitle.fill = sectionFill;
-  dailyTitle.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
-  ws1.getRow(16).height = 24;
-
-  const tableHeaders = [
-    { col: 'B', label: 'No', align: 'center' },
-    { col: 'C', label: 'Tanggal Transaksi', align: 'center' },
-    { col: 'D', label: 'Volume Transaksi', align: 'center' },
-    { col: 'E', label: 'Total Omzet Harian (Rp)', align: 'right' },
-  ];
-
-  ws1.getRow(17).height = 22;
-  tableHeaders.forEach(th => {
-    const c = ws1.getCell(`${th.col}17`);
-    c.value = th.label;
-    c.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FFFFFFFF' } };
-    c.fill = tableHeaderFill;
-    c.alignment = { horizontal: th.align, vertical: 'middle' };
-    c.border = thinBorder;
-  });
-
-  let currentDailyRow = 18;
-  const breakdown = reportData.value.daily_breakdown || [];
-  breakdown.forEach((item, idx) => {
-    ws1.getRow(currentDailyRow).height = 20;
-    const isEven = idx % 2 === 1;
-    const rowFill = isEven ? zebraFill : { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } };
-
-    const cB = ws1.getCell(`B${currentDailyRow}`);
-    cB.value = idx + 1;
-    cB.font = { name: 'Calibri', size: 10 };
-    cB.alignment = { horizontal: 'center', vertical: 'middle' };
-    cB.fill = rowFill;
-    cB.border = thinBorder;
-
-    const cC = ws1.getCell(`C${currentDailyRow}`);
-    cC.value = item.transaction_date;
-    cC.font = { name: 'Calibri', size: 10 };
-    cC.alignment = { horizontal: 'center', vertical: 'middle' };
-    cC.fill = rowFill;
-    cC.border = thinBorder;
-
-    const cD = ws1.getCell(`D${currentDailyRow}`);
-    cD.value = Number(item.transaction_count || 0);
-    cD.numFmt = '#,##0 " Trx"';
-    cD.font = { name: 'Calibri', size: 10 };
-    cD.alignment = { horizontal: 'center', vertical: 'middle' };
-    cD.fill = rowFill;
-    cD.border = thinBorder;
-
-    const cE = ws1.getCell(`E${currentDailyRow}`);
-    cE.value = Number(item.daily_revenue || 0);
-    cE.numFmt = '"Rp"#,##0';
-    cE.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF0F172A' } };
-    cE.alignment = { horizontal: 'right', vertical: 'middle' };
-    cE.fill = rowFill;
-    cE.border = thinBorder;
-
-    currentDailyRow++;
-  });
-
-  // TOTAL ROW
-  ws1.getRow(currentDailyRow).height = 24;
-  ws1.mergeCells(`B${currentDailyRow}:C${currentDailyRow}`);
-  const totalLbl = ws1.getCell(`B${currentDailyRow}`);
-  totalLbl.value = 'TOTAL KESELURUHAN (SEMUA HARI)';
-  totalLbl.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF1E3A8A' } };
-  totalLbl.alignment = { horizontal: 'center', vertical: 'middle' };
-  totalLbl.fill = totalRowFill;
-  totalLbl.border = totalBorder;
-  ws1.getCell(`C${currentDailyRow}`).border = totalBorder;
-
-  const totalTrxCell = ws1.getCell(`D${currentDailyRow}`);
-  totalTrxCell.value = totalCalculatedTrx.value;
-  totalTrxCell.numFmt = '#,##0 " Trx"';
-  totalTrxCell.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF1E3A8A' } };
-  totalTrxCell.alignment = { horizontal: 'center', vertical: 'middle' };
-  totalTrxCell.fill = totalRowFill;
-  totalTrxCell.border = totalBorder;
-
-  const totalRevCell = ws1.getCell(`E${currentDailyRow}`);
-  totalRevCell.value = totalCalculatedRevenue.value;
-  totalRevCell.numFmt = '"Rp"#,##0';
-  totalRevCell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF1E40AF' } };
-  totalRevCell.alignment = { horizontal: 'right', vertical: 'middle' };
-  totalRevCell.fill = totalRowFill;
-  totalRevCell.border = totalBorder;
-
-  // 5. SIGN-OFF BLOCK
-  const signRow = currentDailyRow + 3;
-  ws1.mergeCells(`B${signRow}:C${signRow}`);
-  const s1 = ws1.getCell(`B${signRow}`);
-  s1.value = 'Dibuat & Diverifikasi:';
-  s1.font = { name: 'Calibri', size: 9, italic: true, color: { argb: 'FF64748B' } };
-  s1.alignment = { horizontal: 'center', vertical: 'middle' };
-
-  ws1.mergeCells(`D${signRow}:E${signRow}`);
-  const s2 = ws1.getCell(`D${signRow}`);
-  s2.value = 'Mengetahui / Pimpinan Tenant:';
-  s2.font = { name: 'Calibri', size: 9, italic: true, color: { argb: 'FF64748B' } };
-  s2.alignment = { horizontal: 'center', vertical: 'middle' };
-
-  const nameRow = signRow + 4;
-  ws1.mergeCells(`B${nameRow}:C${nameRow}`);
-  const n1 = ws1.getCell(`B${nameRow}`);
-  n1.value = `( ${userName} )`;
-  n1.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF1E293B' } };
-  n1.alignment = { horizontal: 'center', vertical: 'middle' };
-
-  ws1.mergeCells(`D${nameRow}:E${nameRow}`);
-  const n2 = ws1.getCell(`D${nameRow}`);
-  n2.value = `( ${tenantName} )`;
-  n2.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF1E293B' } };
-  n2.alignment = { horizontal: 'center', vertical: 'middle' };
-
-  const roleRow = nameRow + 1;
-  ws1.mergeCells(`B${roleRow}:C${roleRow}`);
-  const r1 = ws1.getCell(`B${roleRow}`);
-  r1.value = 'Petugas / Kasir Operasional';
-  r1.font = { name: 'Calibri', size: 8, color: { argb: 'FF64748B' } };
-  r1.alignment = { horizontal: 'center', vertical: 'middle' };
-
-  ws1.mergeCells(`D${roleRow}:E${roleRow}`);
-  const r2 = ws1.getCell(`D${roleRow}`);
-  r2.value = 'Owner / Management Tenant';
-  r2.font = { name: 'Calibri', size: 8, color: { argb: 'FF64748B' } };
-  r2.alignment = { horizontal: 'center', vertical: 'middle' };
-
-  // -------------------------------------------------------------
-  // SHEET 2: DAFTAR TRANSAKSI
-  // -------------------------------------------------------------
-  const ws2 = wb.addWorksheet('Daftar Transaksi', {
-    views: [{ showGridLines: true }],
-  });
-
-  ws2.columns = [
-    { width: 4 },  // A: Spacer
-    { width: 6 },  // B: No
-    { width: 24 }, // C: Kode Transaksi
-    { width: 22 }, // D: Tanggal & Jam
-    { width: 26 }, // E: Petugas / Kasir
-    { width: 14 }, // F: Hak Akses
-    { width: 28 }, // G: Total Transaksi (Rp)
-  ];
-
-  // Header Banner Sheet 2
-  ws2.mergeCells('B1:G1');
-  const sh2B1 = ws2.getCell('B1');
-  sh2B1.value = 'PT OKA IKI INDONESIA - MINI ERP SAAS';
-  sh2B1.font = { name: 'Calibri', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
-  sh2B1.alignment = { horizontal: 'center', vertical: 'middle' };
-  sh2B1.fill = navyFill;
-  ws2.getRow(1).height = 28;
-
-  ws2.mergeCells('B2:G2');
-  const sh2B2 = ws2.getCell('B2');
-  sh2B2.value = 'LOG AUDIT TRANSAKSI PENJUALAN OPERASIONAL';
-  sh2B2.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
-  sh2B2.alignment = { horizontal: 'center', vertical: 'middle' };
-  sh2B2.fill = indigoFill;
-  ws2.getRow(2).height = 22;
-
-  const rawTransactions = reportData.value.recent_transactions || [];
-  ws2.mergeCells('B3:G3');
-  const sh2B3 = ws2.getCell('B3');
-  sh2B3.value = `Tenant: ${tenantName} | Periode: ${startDate} s/d ${endDate} | Total: ${rawTransactions.length} Transaksi Terdata`;
-  sh2B3.font = { name: 'Calibri', size: 9, italic: true, color: { argb: 'FF475569' } };
-  sh2B3.alignment = { horizontal: 'center', vertical: 'middle' };
-  sh2B3.fill = slateSubFill;
-  ws2.getRow(3).height = 18;
-
-  ws2.getRow(4).height = 10;
-
-  // Table Headers Sheet 2
-  const trxHeaders = [
-    { col: 'B', label: 'No', align: 'center' },
-    { col: 'C', label: 'Kode Transaksi', align: 'center' },
-    { col: 'D', label: 'Tanggal & Jam', align: 'center' },
-    { col: 'E', label: 'Petugas / Kasir', align: 'left' },
-    { col: 'F', label: 'Hak Akses', align: 'center' },
-    { col: 'G', label: 'Total Transaksi (Rp)', align: 'right' },
-  ];
-
-  ws2.getRow(5).height = 24;
-  trxHeaders.forEach(th => {
-    const c = ws2.getCell(`${th.col}5`);
-    c.value = th.label;
-    c.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FFFFFFFF' } };
-    c.fill = sectionFill;
-    c.alignment = { horizontal: th.align, vertical: 'middle', indent: th.align === 'left' ? 1 : 0 };
-    c.border = thinBorder;
-  });
-
-  let currentTrxRow = 6;
-  let runningTrxTotal = 0;
-  rawTransactions.forEach((trx, idx) => {
-    ws2.getRow(currentTrxRow).height = 20;
-    const isEven = idx % 2 === 1;
-    const rowFill = isEven ? zebraFill : { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } };
-    const trxTotal = Number(trx.total || 0);
-    runningTrxTotal += trxTotal;
-
-    const cB = ws2.getCell(`B${currentTrxRow}`);
-    cB.value = idx + 1;
-    cB.font = { name: 'Calibri', size: 10 };
-    cB.alignment = { horizontal: 'center', vertical: 'middle' };
-    cB.fill = rowFill;
-    cB.border = thinBorder;
-
-    const cC = ws2.getCell(`C${currentTrxRow}`);
-    cC.value = trx.transaction_code;
-    cC.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF1D4ED8' } };
-    cC.alignment = { horizontal: 'center', vertical: 'middle' };
-    cC.fill = rowFill;
-    cC.border = thinBorder;
-
-    const cD = ws2.getCell(`D${currentTrxRow}`);
-    cD.value = trx.transaction_date;
-    cD.font = { name: 'Calibri', size: 10 };
-    cD.alignment = { horizontal: 'center', vertical: 'middle' };
-    cD.fill = rowFill;
-    cD.border = thinBorder;
-
-    const cE = ws2.getCell(`E${currentTrxRow}`);
-    cE.value = trx.user?.name || 'Kasir';
-    cE.font = { name: 'Calibri', size: 10 };
-    cE.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
-    cE.fill = rowFill;
-    cE.border = thinBorder;
-
-    const cF = ws2.getCell(`F${currentTrxRow}`);
-    const roleStr = (trx.user?.role || 'user').toUpperCase();
-    cF.value = roleStr;
-    cF.font = { name: 'Calibri', size: 9, bold: true, color: roleStr === 'OWNER' ? { argb: 'FF7C3AED' } : { argb: 'FF2563EB' } };
-    cF.alignment = { horizontal: 'center', vertical: 'middle' };
-    cF.fill = rowFill;
-    cF.border = thinBorder;
-
-    const cG = ws2.getCell(`G${currentTrxRow}`);
-    cG.value = trxTotal;
-    cG.numFmt = '"Rp"#,##0';
-    cG.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF0F172A' } };
-    cG.alignment = { horizontal: 'right', vertical: 'middle' };
-    cG.fill = rowFill;
-    cG.border = thinBorder;
-
-    currentTrxRow++;
-  });
-
-  // Total Row Sheet 2
-  ws2.getRow(currentTrxRow).height = 24;
-  ws2.mergeCells(`B${currentTrxRow}:F${currentTrxRow}`);
-  const trxTotalLbl = ws2.getCell(`B${currentTrxRow}`);
-  trxTotalLbl.value = 'TOTAL AKUMULASI TRANSAKSI TERDATA';
-  trxTotalLbl.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF1E3A8A' } };
-  trxTotalLbl.alignment = { horizontal: 'right', vertical: 'middle', indent: 1 };
-  trxTotalLbl.fill = totalRowFill;
-  trxTotalLbl.border = totalBorder;
-  for (const colCode of ['C', 'D', 'E', 'F']) {
-    ws2.getCell(`${colCode}${currentTrxRow}`).border = totalBorder;
-  }
-
-  const trxTotalVal = ws2.getCell(`G${currentTrxRow}`);
-  trxTotalVal.value = runningTrxTotal;
-  trxTotalVal.numFmt = '"Rp"#,##0';
-  trxTotalVal.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF1E40AF' } };
-  trxTotalVal.alignment = { horizontal: 'right', vertical: 'middle' };
-  trxTotalVal.fill = totalRowFill;
-  trxTotalVal.border = totalBorder;
-
-  // Export File to Browser
-  const cleanFilename = `Laporan_Omzet_${tenantName.replace(/[^a-zA-Z0-9]/g, '_')}_${startDate}_sd_${endDate}.xlsx`;
-  const buffer = await wb.xlsx.writeBuffer();
-  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-  const url = window.URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = cleanFilename;
-  document.body.appendChild(link);
-  link.click();
-  window.URL.revokeObjectURL(url);
-  document.body.removeChild(link);
 }
 
 /**
