@@ -28,7 +28,7 @@
         <div class="flex flex-wrap items-center gap-3 mt-5">
           <router-link
             to="/transactions"
-            class="px-4.5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs md:text-sm font-medium rounded-xl shadow-md shadow-indigo-600/20 hover:shadow-indigo-600/30 transition-all flex items-center space-x-2 shrink-0"
+            class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs md:text-sm font-medium rounded-xl shadow-md shadow-indigo-600/20 hover:shadow-indigo-600/30 transition-all flex items-center space-x-2 shrink-0"
           >
             <Plus class="w-4 h-4" />
             <span>Buat Transaksi</span>
@@ -37,7 +37,7 @@
           <router-link
             v-if="authStore.isOwner"
             to="/reports"
-            class="px-4.5 py-2.5 bg-white/90 hover:bg-white text-indigo-600 text-xs md:text-sm font-medium rounded-xl border border-indigo-200/80 shadow-2xs hover:border-indigo-300 transition-all flex items-center space-x-2 shrink-0"
+            class="px-5 py-2.5 bg-white/90 hover:bg-white text-indigo-600 text-xs md:text-sm font-medium rounded-xl border border-indigo-200/80 shadow-sm hover:border-indigo-300 transition-all flex items-center space-x-2 shrink-0"
           >
             <BarChart3 class="w-4 h-4" />
             <span>Lihat Laporan</span>
@@ -60,7 +60,7 @@
       <!-- Card 1: Katalog Produk -->
       <router-link
         to="/products"
-        class="bg-white rounded-2xl p-4.5 sm:p-5 border border-slate-100 shadow-xs hover:shadow-md hover:border-indigo-100 transition-all flex items-center space-x-3.5 sm:space-x-4 group cursor-pointer min-w-0"
+        class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md hover:border-indigo-100 transition-all flex items-center space-x-4 group cursor-pointer min-w-0"
       >
         <div class="w-12 h-12 rounded-2xl bg-indigo-50/70 border border-indigo-100/50 flex items-center justify-center text-indigo-600 shrink-0 group-hover:scale-105 transition-transform">
           <Package class="w-6 h-6" />
@@ -85,7 +85,7 @@
       <!-- Card 2: Transaksi Bulan Ini -->
       <router-link
         to="/transactions"
-        class="bg-white rounded-2xl p-4.5 sm:p-5 border border-slate-100 shadow-xs hover:shadow-md hover:border-emerald-100 transition-all flex items-center space-x-3.5 sm:space-x-4 group cursor-pointer min-w-0"
+        class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md hover:border-emerald-100 transition-all flex items-center space-x-4 group cursor-pointer min-w-0"
       >
         <div class="w-12 h-12 rounded-2xl bg-emerald-50/70 border border-emerald-100/50 flex items-center justify-center text-emerald-600 shrink-0 group-hover:scale-105 transition-transform">
           <ShoppingCart class="w-6 h-6" />
@@ -113,7 +113,7 @@
       <router-link
         :to="authStore.isOwner ? '/reports' : '#'"
         :class="[
-          'bg-white rounded-2xl p-4.5 sm:p-5 border border-slate-100 shadow-xs transition-all flex items-center space-x-3.5 sm:space-x-4 group min-w-0',
+          'bg-white rounded-2xl p-5 border border-slate-100 shadow-sm transition-all flex items-center space-x-4 group min-w-0',
           authStore.isOwner ? 'hover:shadow-md hover:border-amber-100 cursor-pointer' : 'cursor-default'
         ]"
       >
@@ -145,7 +145,7 @@
       </router-link>
 
       <!-- Card 4: Hak Akses Sistem -->
-      <div class="bg-white rounded-2xl p-4.5 sm:p-5 border border-slate-100 shadow-xs hover:shadow-md transition-all flex items-center space-x-3.5 sm:space-x-4 group min-w-0">
+      <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md transition-all flex items-center space-x-4 group min-w-0">
         <div class="w-12 h-12 rounded-2xl bg-blue-50/70 border border-blue-100/50 flex items-center justify-center text-blue-600 shrink-0 group-hover:scale-105 transition-transform">
           <ShieldCheck class="w-6 h-6" />
         </div>
