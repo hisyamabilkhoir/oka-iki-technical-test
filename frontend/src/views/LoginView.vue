@@ -116,25 +116,13 @@
 
           <!-- High-Resolution Laptop Image Mockup + Cursive Handwriting Note -->
           <div class="relative pt-1 max-w-xl">
-            <!-- Rendered Laptop Image with mix-blend-multiply to blend background seamlessly -->
-            <div class="relative w-full max-w-[460px] lg:max-w-[490px]">
+            <!-- Rendered Laptop Image with high resolution 3D illustration -->
+            <div class="relative w-full max-w-[480px] lg:max-w-[510px]">
               <img
                 :src="laptopMockup"
                 alt="Mini ERP Dashboard on Laptop"
                 class="w-full h-auto object-contain drop-shadow-[0_15px_30px_rgba(15,23,42,0.14)] select-none transition-transform duration-500 hover:scale-[1.01]"
               />
-
-              <!-- Hand-written cursive callout positioned gracefully near the top-right of laptop -->
-              <div class="hidden sm:flex flex-col items-center absolute -top-2 -right-16 lg:-right-20 z-20 select-none pointer-events-none">
-                <span class="font-handwriting text-2xl lg:text-3xl text-slate-800 font-bold -rotate-6 leading-tight text-center">
-                  Dari Data<br />Menuju Pertumbuhan
-                </span>
-                <!-- Curved Doodle Arrow pointing towards laptop screen -->
-                <svg class="w-10 h-8 text-slate-700 mt-1 -rotate-6" viewBox="0 0 50 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M40 5 C 28 12, 18 18, 10 28" />
-                  <polyline points="18 24 9 28 14 35" />
-                </svg>
-              </div>
             </div>
           </div>
         </div>
