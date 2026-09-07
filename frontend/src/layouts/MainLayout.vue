@@ -154,35 +154,37 @@
     <!-- Main Content Area -->
     <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
       <!-- Top Navigation Bar -->
-      <header class="h-16 bg-white border-b border-slate-200 px-4 md:px-8 flex items-center justify-between shrink-0 shadow-sm">
-        <div class="flex items-center space-x-3">
+      <header class="h-16 bg-white border-b border-slate-200 px-4 md:px-8 flex items-center justify-between shrink-0 shadow-xs gap-4">
+        <div class="flex items-center space-x-3 min-w-0">
           <button
             @click="mobileOpen = true"
-            class="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg md:hidden"
+            class="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg md:hidden shrink-0"
           >
-            <Menu class="w-6 h-6" />
+            <Menu class="w-5 h-5" />
           </button>
-          <div>
-            <span class="text-xs font-semibold text-indigo-600 uppercase tracking-wider">PT Oka Iki Indonesia Technical Test</span>
-            <h2 class="text-sm md:text-base font-bold text-slate-800 flex items-center space-x-2">
+          <div class="min-w-0">
+            <span class="text-[10px] sm:text-xs font-semibold text-indigo-600 uppercase tracking-wider block truncate">
+              PT Oka Iki Indonesia Technical Test
+            </span>
+            <h2 class="text-xs sm:text-sm md:text-base font-bold text-slate-800 flex items-center space-x-2 truncate">
               <span>SaaS Mini ERP</span>
               <span class="text-slate-300">|</span>
-              <span class="text-slate-600 font-medium">{{ authStore.tenant?.name }}</span>
+              <span class="text-slate-600 font-medium truncate">{{ authStore.tenant?.name }}</span>
             </h2>
           </div>
         </div>
 
         <!-- Evaluator Quick Switcher Helper -->
-        <div class="flex items-center space-x-3">
-          <div class="hidden sm:flex items-center space-x-2 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200 text-xs">
+        <div class="flex items-center space-x-3 shrink-0">
+          <div class="hidden lg:flex items-center space-x-2 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200 text-xs">
             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span class="text-slate-500 font-medium">Isolasi Tenant Terverifikasi:</span>
+            <span class="text-slate-500 font-medium">Isolasi:</span>
             <span class="font-bold text-slate-700">{{ authStore.tenant?.name }}</span>
           </div>
 
           <button
             @click="handleLogout"
-            class="flex items-center space-x-1 text-xs font-semibold text-slate-600 hover:text-red-600 bg-slate-100 hover:bg-red-50 border border-slate-200 hover:border-red-200 px-3 py-1.5 rounded-lg transition-colors"
+            class="flex items-center space-x-1.5 text-xs font-medium text-slate-600 hover:text-red-600 bg-slate-100 hover:bg-red-50 border border-slate-200 hover:border-red-200 px-3 py-1.5 rounded-lg transition-colors"
           >
             <LogOut class="w-3.5 h-3.5" />
             <span class="hidden sm:inline">Ganti Akun Demo</span>
