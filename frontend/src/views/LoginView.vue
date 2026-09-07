@@ -124,12 +124,12 @@
                 class="w-full h-auto object-contain drop-shadow-[0_15px_30px_rgba(15,23,42,0.14)] select-none transition-transform duration-500 hover:scale-[1.01]"
               />
 
-              <!-- Hand-written cursive callout positioned in the natural open space above laptop screen -->
-              <div class="hidden sm:flex flex-col items-center absolute top-1 sm:top-2.5 right-4 sm:right-6 lg:right-8 z-20 select-none pointer-events-none">
+              <!-- Hand-written cursive callout positioned gracefully to the top-right of the laptop screen -->
+              <div class="hidden sm:flex flex-col items-center absolute -top-3 sm:-top-5 lg:-top-6 -right-6 sm:-right-10 lg:-right-14 xl:-right-16 z-20 select-none pointer-events-none">
                 <span class="font-handwriting text-2xl lg:text-[26px] text-slate-800 font-bold -rotate-6 leading-tight text-center">
                   Dari Data<br />Menuju Pertumbuhan
                 </span>
-                <!-- Curved Doodle Arrow pointing towards laptop screen -->
+                <!-- Curved Doodle Arrow pointing down-left towards laptop screen -->
                 <svg class="w-8 h-7 text-slate-700 mt-0.5 -rotate-6" viewBox="0 0 50 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M40 5 C 28 12, 18 18, 10 28" />
                   <polyline points="18 24 9 28 14 35" />
