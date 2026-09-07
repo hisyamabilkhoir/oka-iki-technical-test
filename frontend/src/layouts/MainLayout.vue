@@ -107,17 +107,20 @@
           <span>Laporan Omzet</span>
         </router-link>
 
-        <!-- Disabled indicator for Staff -->
+        <!-- Locked indicator for Staff -->
         <div
           v-else
-          class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-500 bg-slate-800/40 cursor-not-allowed border border-dashed border-slate-800"
-          title="Hanya dapat diakses oleh Owner"
+          class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-500 bg-slate-800/30 border border-slate-800/60 cursor-not-allowed select-none transition-colors"
+          title="Menu Laporan Omzet hanya dapat diakses oleh akun Owner"
         >
-          <div class="flex items-center space-x-3">
-            <BarChart3 class="w-5 h-5 opacity-40" />
-            <span class="opacity-50">Laporan Omzet</span>
+          <div class="flex items-center space-x-3 min-w-0">
+            <BarChart3 class="w-5 h-5 text-slate-600 shrink-0" />
+            <span class="text-slate-400 text-sm whitespace-nowrap">Laporan Omzet</span>
           </div>
-          <span class="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded border border-slate-700">Owner Only</span>
+          <span class="inline-flex items-center space-x-1 text-[10px] font-medium text-slate-400 bg-slate-800/90 border border-slate-700/60 px-2 py-0.5 rounded-full whitespace-nowrap shrink-0">
+            <Lock class="w-3 h-3 text-slate-400" />
+            <span>Owner</span>
+          </span>
         </div>
       </nav>
 
@@ -216,6 +219,7 @@ import {
   LogOut,
   Menu,
   X,
+  Lock,
 } from '@lucide/vue';
 
 const authStore = useAuthStore();
