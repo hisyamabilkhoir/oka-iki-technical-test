@@ -6,7 +6,16 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['"Plus Jakarta Sans"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        handwriting: ['"Caveat"', 'cursive'],
+      },
       colors: {
+        navy: {
+          800: '#0f1f38',
+          900: '#0B1528',
+          950: '#070D19',
+        },
         brand: {
           50: '#eef2ff',
           100: '#e0e7ff',
