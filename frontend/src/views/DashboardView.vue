@@ -1,62 +1,62 @@
 <template>
-  <div class="space-y-6">
-    <!-- Top Hero Welcome Banner -->
+  <div class="space-y-4 md:space-y-5">
+    <!-- Top Hero Welcome Banner (Snug, Balanced & Compact) -->
     <div
-      class="bg-gradient-to-r from-[#edf2fe] via-[#e6edfd] to-[#dce6fc] rounded-3xl p-6 md:p-8 border border-blue-100/70 shadow-xs relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-6"
+      class="bg-gradient-to-r from-[#edf2fe] via-[#e6edfd] to-[#dce6fc] rounded-2xl px-5 sm:px-6 md:px-7 py-3 sm:py-3.5 border border-blue-100/70 shadow-xs relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-3 lg:gap-5"
     >
       <!-- Left Content -->
       <div class="relative z-10 flex-1 min-w-0 max-w-2xl xl:max-w-3xl">
         <!-- Tenant Context Pill -->
         <div
-          class="inline-flex items-center space-x-2 bg-white/90 text-indigo-700 text-xs font-medium px-3.5 py-1 rounded-full border border-indigo-200/70 shadow-2xs mb-3"
+          class="inline-flex items-center space-x-1.5 bg-white/90 text-indigo-700 text-[11px] font-medium px-2.5 py-0.5 rounded-full border border-indigo-200/70 shadow-2xs mb-1.5"
         >
-          <Building2 class="w-3.5 h-3.5 text-indigo-600" />
+          <Building2 class="w-3 h-3 text-indigo-600" />
           <span>Multi-Tenant Context: {{ authStore.tenant?.name }}</span>
         </div>
 
         <!-- Heading with User Name: Calm & Elegant -->
-        <h1 class="text-2xl md:text-3xl font-bold text-slate-800 tracking-tight leading-snug">
+        <h1 class="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight leading-snug">
           Selamat Datang, <span class="text-indigo-600">{{ authStore.user?.name }}</span>!
         </h1>
 
         <!-- Subtitle -->
-        <p class="text-slate-500 text-sm mt-2 leading-relaxed font-normal max-w-2xl">
+        <p class="text-slate-500 text-xs sm:text-sm mt-1 leading-relaxed font-normal max-w-2xl">
           Sistem Mini ERP SaaS aktif dengan isolasi data tenant yang terverifikasi. Kelola transaksi, produk, dan laporan dengan lebih mudah dan efisien.
         </p>
 
         <!-- CTA Buttons -->
-        <div class="flex flex-wrap items-center gap-3 mt-5">
+        <div class="flex flex-wrap items-center gap-2.5 mt-3">
           <router-link
             to="/transactions"
-            class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs md:text-sm font-medium rounded-xl shadow-md shadow-indigo-600/20 hover:shadow-indigo-600/30 transition-all flex items-center space-x-2 shrink-0"
+            class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium rounded-xl shadow-md shadow-indigo-600/20 hover:shadow-indigo-600/30 transition-all flex items-center space-x-1.5 shrink-0"
           >
-            <Plus class="w-4 h-4" />
+            <Plus class="w-3.5 h-3.5" />
             <span>Buat Transaksi</span>
           </router-link>
 
           <router-link
             v-if="authStore.isOwner"
             to="/reports"
-            class="px-5 py-2.5 bg-white/90 hover:bg-white text-indigo-600 text-xs md:text-sm font-medium rounded-xl border border-indigo-200/80 shadow-sm hover:border-indigo-300 transition-all flex items-center space-x-2 shrink-0"
+            class="px-4 py-2 bg-white/90 hover:bg-white text-indigo-600 text-xs font-medium rounded-xl border border-indigo-200/80 shadow-sm hover:border-indigo-300 transition-all flex items-center space-x-1.5 shrink-0"
           >
-            <BarChart3 class="w-4 h-4" />
+            <BarChart3 class="w-3.5 h-3.5" />
             <span>Lihat Laporan</span>
           </router-link>
         </div>
       </div>
 
-      <!-- Right 3D Illustration matching latest graphic -->
+      <!-- Right 3D Illustration matching latest graphic (Snug & Proportional) -->
       <div class="relative shrink-0 flex items-center justify-center lg:justify-end w-full lg:w-auto">
         <img
           :src="dashboardHeroImg"
           alt="Kelola Bisnis Lebih Mudah"
-          class="h-44 sm:h-52 md:h-60 lg:h-64 xl:h-72 w-auto object-contain select-none pointer-events-none drop-shadow-sm"
+          class="h-28 sm:h-32 md:h-36 lg:h-38 w-auto object-contain select-none pointer-events-none drop-shadow-sm"
         />
       </div>
     </div>
 
     <!-- 4 Metric Stat Cards Grid -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 md:gap-4">
       <!-- Card 1: Katalog Produk -->
       <router-link
         to="/products"
