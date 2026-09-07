@@ -1,14 +1,14 @@
 <template>
-  <div class="min-h-screen bg-slate-50 flex">
+  <div class="h-screen w-full bg-slate-50 flex overflow-hidden">
     <!-- Sidebar for Desktop -->
     <aside
       :class="[
-        'fixed inset-y-0 left-0 z-30 w-64 bg-slate-900 text-white transition-transform duration-300 ease-in-out md:translate-x-0 md:static md:inset-auto flex flex-col',
-        mobileOpen ? 'translate-x-0' : '-translate-x-full'
+        'fixed inset-y-0 left-0 z-30 w-64 shrink-0 h-screen bg-slate-900 text-white transition-transform duration-300 ease-in-out md:translate-x-0 md:static flex flex-col',
+        mobileOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
       ]"
     >
-      <!-- Brand & Tenant Header -->
-      <div class="p-5 border-b border-slate-800">
+      <!-- Brand & Tenant Header (Fixed Top) -->
+      <div class="p-5 border-b border-slate-800 shrink-0">
         <div class="flex items-center justify-between">
           <div class="flex items-center space-x-3">
             <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-400 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
@@ -47,8 +47,8 @@
         </div>
       </div>
 
-      <!-- Navigation Menu -->
-      <nav class="flex-1 p-4 space-y-1.5 overflow-y-auto">
+      <!-- Navigation Menu (Independent Scrollbar) -->
+      <nav class="flex-1 p-4 space-y-1.5 overflow-y-auto custom-dark-scrollbar">
         <router-link
           to="/dashboard"
           @click="mobileOpen = false"
@@ -121,8 +121,8 @@
         </div>
       </nav>
 
-      <!-- Bottom User Profile & Logout -->
-      <div class="p-4 border-t border-slate-800 bg-slate-900/90">
+      <!-- Bottom User Profile & Logout (Fixed Bottom) -->
+      <div class="p-4 border-t border-slate-800 bg-slate-900 shrink-0">
         <div class="flex items-center justify-between">
           <div class="flex items-center space-x-3 min-w-0">
             <div class="w-9 h-9 rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center text-slate-200 font-semibold text-xs shrink-0">
