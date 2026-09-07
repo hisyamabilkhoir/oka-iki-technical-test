@@ -26,12 +26,12 @@ Sistem menggunakan satu database fisik bersama untuk seluruh tenant, di mana sel
 
 ```mermaid
 graph TD
-    User([Pengguna / Client]) -->|1. Kirim Kredensial| Auth[POST /api/login]
-    Auth -->|2. Terbitkan Sanctum Token| ClientToken[Bearer Token]
-    ClientToken -->|3. Request API + Bearer Token| Middleware[auth:sanctum & EnsureRole]
-    Middleware -->|4. Ekstrak User Context| UserContext[auth()->user()->tenant_id]
-    UserContext -->|5. Inject TenantScope Otomatis| Eloquent[Eloquent Model Global Scope]
-    Eloquent -->|6. SQL: WHERE tenant_id = ?| DB[(Shared Database MySQL)]
+    User(["Pengguna / Client"]) -->|1. Kirim Kredensial| Auth["POST /api/login"]
+    Auth -->|2. Terbitkan Sanctum Token| ClientToken["Bearer Token"]
+    ClientToken -->|3. Request API + Bearer Token| Middleware["auth:sanctum & EnsureRole"]
+    Middleware -->|4. Ekstrak User Context| UserContext["auth()->user()->tenant_id"]
+    UserContext -->|5. Inject TenantScope Otomatis| Eloquent["Eloquent Model Global Scope"]
+    Eloquent -->|6. SQL: WHERE tenant_id = ?| DB[("Shared Database MySQL")]
 ```
 
 ### Mekanisme Pencegahan Kebocoran Data (Zero Data Leakage):
