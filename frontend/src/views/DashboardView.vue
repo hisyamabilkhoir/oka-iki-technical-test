@@ -168,8 +168,8 @@
 
     <!-- Recent Transactions Table Section -->
     <div class="bg-white rounded-2xl border border-slate-100 shadow-xs overflow-hidden">
-      <!-- Card Header -->
-      <div class="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
+      <!-- Card Header with Search and Filter Toolbar -->
+      <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div class="flex items-center space-x-3">
           <div class="w-9 h-9 rounded-xl bg-slate-50 border border-slate-200/60 flex items-center justify-center text-slate-600">
             <Package class="w-4.5 h-4.5" />
@@ -180,26 +180,67 @@
           </div>
         </div>
 
-        <router-link
-          to="/transactions"
-          class="text-[11px] font-semibold text-indigo-600 hover:text-indigo-700 bg-indigo-50/70 hover:bg-indigo-100/80 px-3 py-1.5 rounded-lg flex items-center space-x-1 transition-colors border border-indigo-100/60"
-        >
-          <span>Lihat Semua</span>
-          <ArrowRight class="w-3 h-3" />
-        </router-link>
+        <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+          <!-- Search input -->
+          <div class="relative flex-1 md:w-56">
+            <Search class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              v-model="trxSearch"
+              @input="handleTrxFilter"
+              type="text"
+              placeholder="Cari transaksi..."
+              class="w-full pl-8 pr-7 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:bg-white"
+            />
+            <button
+              v-if="trxSearch"
+              @click="trxSearch = ''; handleTrxFilter()"
+              class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+            >
+              <X class="w-3 h-3" />
+            </button>
+          </div>
+
+          <!-- Role Filter -->
+          <select
+            v-model="trxRoleFilter"
+            @change="handleTrxFilter"
+            class="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-700 font-medium focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          >
+            <option value="">Semua Petugas</option>
+            <option value="owner">Owner Saja</option>
+            <option value="staff">Staff Saja</option>
+          </select>
+
+          <router-link
+            to="/transactions"
+            class="text-[11px] font-semibold text-indigo-600 hover:text-indigo-700 bg-indigo-50/70 hover:bg-indigo-100/80 px-3 py-1.5 rounded-lg flex items-center space-x-1 transition-colors border border-indigo-100/60 ml-auto md:ml-0"
+          >
+            <span>Buka Kasir</span>
+            <ArrowRight class="w-3 h-3" />
+          </router-link>
+        </div>
       </div>
 
       <!-- Table Content -->
       <div class="overflow-x-auto">
-        <div v-if="loading" class="p-8 text-center text-slate-400 text-xs">
+        <div v-if="trxLoading && recentTransactions.length === 0" class="p-8 text-center text-slate-400 text-xs">
           <span class="inline-block w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mr-2"></span>
           Memuat data transaksi...
         </div>
 
-        <div v-else-if="recentTransactions.length === 0" class="p-12 text-center">
+        <div v-else-if="filteredTransactions.length === 0" class="p-12 text-center">
           <ShoppingCart class="w-10 h-10 text-slate-300 mx-auto mb-2" />
-          <p class="text-sm font-medium text-slate-700">Belum ada transaksi</p>
-          <p class="text-xs text-slate-400 mt-0.5 font-normal">Silakan buat transaksi baru melalui modul Kasir / Transaksi.</p>
+          <p class="text-sm font-medium text-slate-700">Tidak ada transaksi ditemukan</p>
+          <p class="text-xs text-slate-400 mt-0.5 font-normal">
+            {{ trxSearch || trxRoleFilter ? 'Tidak ada hasil yang sesuai dengan kata kunci atau filter petugas.' : 'Silakan buat transaksi baru melalui modul Kasir / Transaksi.' }}
+          </p>
+          <button
+            v-if="trxSearch || trxRoleFilter"
+            @click="resetTrxFilter"
+            class="mt-3 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-medium"
+          >
+            Reset Filter
+          </button>
         </div>
 
         <table v-else class="w-full min-w-[620px] text-left text-xs">
@@ -225,7 +266,7 @@
           </thead>
           <tbody class="divide-y border-slate-100 divide-slate-100">
             <tr
-              v-for="trx in recentTransactions"
+              v-for="trx in paginatedTransactions"
               :key="trx.id"
               class="hover:bg-slate-50/60 transition-colors"
             >
@@ -274,6 +315,20 @@
           </tbody>
         </table>
       </div>
+
+      <!-- Pagination for Recent Transactions -->
+      <PaginationControls
+        :current-page="trxPagination.currentPage"
+        :last-page="trxPagination.lastPage"
+        :total="trxPagination.total"
+        :from="trxPagination.from"
+        :to="trxPagination.to"
+        :per-page="trxPagination.perPage"
+        :per-page-options="[5, 10, 20]"
+        :loading="trxLoading"
+        @page-change="onTrxPageChange"
+        @per-page-change="onTrxPerPageChange"
+      />
     </div>
 
     <!-- Receipt Modal Dialog -->
@@ -285,12 +340,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted } from 'vue';
 import { useAuthStore } from '../stores/auth';
 import api from '../api/axios';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import dashboardHeroImg from '../assets/dashboard_hero.png';
 import ReceiptModal from '../components/ReceiptModal.vue';
+import PaginationControls from '../components/PaginationControls.vue';
 import {
   Building2,
   Package,
@@ -303,15 +359,32 @@ import {
   ChevronsUpDown,
   ArrowRight,
   MoreHorizontal,
+  Search,
+  X,
 } from '@lucide/vue';
 
 const authStore = useAuthStore();
 const loading = ref(true);
+const trxLoading = ref(false);
 
 const productCount = ref(0);
 const monthlyTransactionsCount = ref(0);
 const monthlyRevenue = ref(0);
 const recentTransactions = ref([]);
+
+// Search & Filter State for Transactions Table
+const trxSearch = ref('');
+const trxRoleFilter = ref('');
+
+// Pagination state for Transactions Table
+const trxPagination = reactive({
+  currentPage: 1,
+  lastPage: 1,
+  total: 0,
+  from: 0,
+  to: 0,
+  perPage: 5,
+});
 
 const showReceiptModal = ref(false);
 const currentReceipt = ref(null);
@@ -320,6 +393,69 @@ onMounted(async () => {
   await loadDashboardData();
 });
 
+// Filtered list based on search and role
+const filteredTransactions = computed(() => {
+  let list = recentTransactions.value;
+  if (trxSearch.value.trim()) {
+    const q = trxSearch.value.trim().toLowerCase();
+    list = list.filter((t) => {
+      const code = (t.transaction_code || '').toLowerCase();
+      const creator = (t.creator?.name || '').toLowerCase();
+      const items = (t.items || []).map(i => (i.product_name || '').toLowerCase()).join(' ');
+      return code.includes(q) || creator.includes(q) || items.includes(q);
+    });
+  }
+  if (trxRoleFilter.value) {
+    list = list.filter((t) => t.creator?.role === trxRoleFilter.value);
+  }
+  return list;
+});
+
+// Slice according to client pagination
+const paginatedTransactions = computed(() => {
+  const start = (trxPagination.currentPage - 1) * trxPagination.perPage;
+  return filteredTransactions.value.slice(start, start + trxPagination.perPage);
+});
+
+function updateTrxPaginationMeta() {
+  const total = filteredTransactions.value.length;
+  trxPagination.total = total;
+  trxPagination.lastPage = Math.max(1, Math.ceil(total / trxPagination.perPage));
+  if (trxPagination.currentPage > trxPagination.lastPage) {
+    trxPagination.currentPage = trxPagination.lastPage;
+  }
+  if (total === 0) {
+    trxPagination.from = 0;
+    trxPagination.to = 0;
+  } else {
+    trxPagination.from = (trxPagination.currentPage - 1) * trxPagination.perPage + 1;
+    trxPagination.to = Math.min(trxPagination.currentPage * trxPagination.perPage, total);
+  }
+}
+
+function handleTrxFilter() {
+  trxPagination.currentPage = 1;
+  updateTrxPaginationMeta();
+}
+
+function resetTrxFilter() {
+  trxSearch.value = '';
+  trxRoleFilter.value = '';
+  trxPagination.currentPage = 1;
+  updateTrxPaginationMeta();
+}
+
+function onTrxPageChange(page) {
+  trxPagination.currentPage = page;
+  updateTrxPaginationMeta();
+}
+
+function onTrxPerPageChange(newPerPage) {
+  trxPagination.perPage = newPerPage;
+  trxPagination.currentPage = 1;
+  updateTrxPaginationMeta();
+}
+
 async function loadDashboardData() {
   loading.value = true;
   try {
@@ -327,9 +463,10 @@ async function loadDashboardData() {
     const prodRes = await api.get('/products?per_page=1');
     productCount.value = prodRes.data.meta?.total || prodRes.data.data?.length || 0;
 
-    // 2. Fetch transactions
-    const trxRes = await api.get('/transactions?per_page=5');
+    // 2. Fetch transactions (fetch up to 100 for responsive client filtering & pagination)
+    const trxRes = await api.get('/transactions?per_page=100');
     recentTransactions.value = trxRes.data.data || [];
+    updateTrxPaginationMeta();
 
     // 3. Fetch reports if owner
     if (authStore.isOwner) {

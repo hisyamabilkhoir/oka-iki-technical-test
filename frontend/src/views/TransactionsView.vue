@@ -237,61 +237,174 @@
         </div>
       </div>
 
+      <!-- History Filter & Search Bar -->
+      <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm space-y-3">
+        <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+          <!-- Search input -->
+          <div class="relative flex-1">
+            <Search class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              v-model="historySearch"
+              @input="handleHistoryFilterChange"
+              type="text"
+              placeholder="Cari kode transaksi, kasir, atau nama item..."
+              class="w-full pl-9 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
+            />
+            <button
+              v-if="historySearch"
+              @click="historySearch = ''; handleHistoryFilterChange()"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+            >
+              <X class="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <!-- Sort dropdown -->
+          <div class="flex items-center space-x-2 shrink-0">
+            <label class="text-xs text-slate-400 hidden sm:inline">Urutan:</label>
+            <select
+              v-model="historySortBy"
+              @change="handleHistoryFilterChange"
+              class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              <option value="date_desc">Tanggal Terbaru</option>
+              <option value="date_asc">Tanggal Terlama</option>
+              <option value="total_desc">Total Tertinggi</option>
+              <option value="total_asc">Total Terendah</option>
+              <option value="id_desc">ID Terbaru</option>
+            </select>
+
+            <!-- Toggle Date Filter Button -->
+            <button
+              @click="showDateFilter = !showDateFilter"
+              :class="[
+                'px-3 py-2 rounded-xl text-xs font-medium border flex items-center space-x-1.5 transition-all',
+                showDateFilter || historyStartDate || historyEndDate
+                  ? 'bg-indigo-50 border-indigo-200 text-indigo-700 font-semibold'
+                  : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+              ]"
+            >
+              <Calendar class="w-3.5 h-3.5" />
+              <span>Filter Tanggal</span>
+              <span
+                v-if="historyStartDate || historyEndDate"
+                class="w-2 h-2 rounded-full bg-indigo-600"
+              ></span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Expandable Date Filter Row -->
+        <div
+          v-if="showDateFilter"
+          class="pt-3 border-t border-slate-100 flex flex-wrap items-center gap-3 text-xs bg-slate-50/50 p-3 rounded-xl"
+        >
+          <span class="text-slate-500 font-medium">Rentang Tanggal Transaksi:</span>
+          <div class="flex items-center space-x-2">
+            <input
+              v-model="historyStartDate"
+              @change="handleHistoryFilterChange"
+              type="date"
+              class="px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            />
+            <span class="text-slate-400">&ndash;</span>
+            <input
+              v-model="historyEndDate"
+              @change="handleHistoryFilterChange"
+              type="date"
+              class="px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            />
+          </div>
+
+          <button
+            v-if="historySearch || historyStartDate || historyEndDate"
+            @click="resetHistoryFilters"
+            class="text-indigo-600 hover:text-indigo-800 font-semibold ml-auto"
+          >
+            Reset Filter
+          </button>
+        </div>
+      </div>
+
       <!-- Transactions List Table -->
       <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-        <div v-if="loadingHistory" class="p-12 text-center text-slate-400 text-sm">
+        <div v-if="loadingHistory && historyTransactions.length === 0" class="p-12 text-center text-slate-400 text-sm">
           <span class="inline-block w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mb-2"></span>
           <p>Memuat riwayat transaksi...</p>
         </div>
 
         <div v-else-if="historyTransactions.length === 0" class="p-16 text-center">
           <Clock class="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <p class="text-base font-bold text-slate-800">Belum ada riwayat transaksi</p>
-          <p class="text-xs text-slate-500 mt-1">Transaksi yang dibuat akan tercatat di sini secara permanen.</p>
+          <p class="text-base font-bold text-slate-800">Tidak ada riwayat transaksi</p>
+          <p class="text-xs text-slate-500 mt-1">
+            {{ historySearch || historyStartDate || historyEndDate ? 'Tidak ada transaksi yang cocok dengan kata kunci atau filter tanggal.' : 'Transaksi yang dibuat akan tercatat di sini secara permanen.' }}
+          </p>
+          <button
+            v-if="historySearch || historyStartDate || historyEndDate"
+            @click="resetHistoryFilters"
+            class="mt-4 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg"
+          >
+            Reset Filter
+          </button>
         </div>
 
-        <div v-else class="overflow-x-auto">
-          <table class="w-full text-left text-sm">
-            <thead class="bg-slate-50/80 text-xs font-semibold uppercase tracking-wider text-slate-500 border-b border-slate-100">
-              <tr>
-                <th class="px-5 py-3">Kode Transaksi</th>
-                <th class="px-5 py-3">Tanggal</th>
-                <th class="px-5 py-3">Petugas / Kasir</th>
-                <th class="px-5 py-3">Rincian Item</th>
-                <th class="px-5 py-3 text-right">Total Transaksi</th>
-                <th class="px-5 py-3 text-right">Aksi</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100">
-              <tr v-for="trx in historyTransactions" :key="trx.id" class="hover:bg-slate-50/70 transition-colors">
-                <td class="px-5 py-3.5 font-mono font-bold text-xs text-indigo-600">
-                  {{ trx.transaction_code }}
-                </td>
-                <td class="px-5 py-3.5 text-xs text-slate-600">
-                  {{ formatDate(trx.transaction_date) }}
-                </td>
-                <td class="px-5 py-3.5 text-xs">
-                  <div class="font-medium text-slate-800">{{ trx.creator?.name }}</div>
-                  <div class="text-[10px] text-slate-400 font-mono">{{ trx.creator?.role }}</div>
-                </td>
-                <td class="px-5 py-3.5 text-xs text-slate-600">
-                  {{ trx.items?.length || 0 }} Jenis Produk
-                </td>
-                <td class="px-5 py-3.5 text-right font-bold text-slate-900">
-                  {{ formatCurrency(trx.total) }}
-                </td>
-                <td class="px-5 py-3.5 text-right">
-                  <button
-                    @click="viewReceipt(trx)"
-                    class="px-3 py-1 bg-slate-100 hover:bg-indigo-50 text-slate-700 hover:text-indigo-600 rounded-lg text-xs font-semibold transition-colors inline-flex items-center space-x-1"
-                  >
-                    <Receipt class="w-3.5 h-3.5" />
-                    <span>Lihat Struk</span>
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <div v-else>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+              <thead class="bg-slate-50/80 text-xs font-semibold uppercase tracking-wider text-slate-500 border-b border-slate-100">
+                <tr>
+                  <th class="px-5 py-3">Kode Transaksi</th>
+                  <th class="px-5 py-3">Tanggal</th>
+                  <th class="px-5 py-3">Petugas / Kasir</th>
+                  <th class="px-5 py-3">Rincian Item</th>
+                  <th class="px-5 py-3 text-right">Total Transaksi</th>
+                  <th class="px-5 py-3 text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                <tr v-for="trx in historyTransactions" :key="trx.id" class="hover:bg-slate-50/70 transition-colors">
+                  <td class="px-5 py-3.5 font-mono font-bold text-xs text-indigo-600">
+                    {{ trx.transaction_code }}
+                  </td>
+                  <td class="px-5 py-3.5 text-xs text-slate-600">
+                    {{ formatDate(trx.transaction_date) }}
+                  </td>
+                  <td class="px-5 py-3.5 text-xs">
+                    <div class="font-medium text-slate-800">{{ trx.creator?.name || 'Kasir' }}</div>
+                    <div class="text-[10px] text-slate-400 font-mono">{{ trx.creator?.role }}</div>
+                  </td>
+                  <td class="px-5 py-3.5 text-xs text-slate-600">
+                    {{ trx.items?.length || 0 }} Jenis Produk
+                  </td>
+                  <td class="px-5 py-3.5 text-right font-bold text-slate-900">
+                    {{ formatCurrency(trx.total) }}
+                  </td>
+                  <td class="px-5 py-3.5 text-right">
+                    <button
+                      @click="viewReceipt(trx)"
+                      class="px-3 py-1 bg-slate-100 hover:bg-indigo-50 text-slate-700 hover:text-indigo-600 rounded-lg text-xs font-semibold transition-colors inline-flex items-center space-x-1"
+                    >
+                      <Receipt class="w-3.5 h-3.5" />
+                      <span>Lihat Struk</span>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination Controls for History Table -->
+          <PaginationControls
+            :current-page="historyPagination.currentPage"
+            :last-page="historyPagination.lastPage"
+            :total="historyPagination.total"
+            :from="historyPagination.from"
+            :to="historyPagination.to"
+            :per-page="historyPagination.perPage"
+            :loading="loadingHistory"
+            @page-change="onHistoryPageChange"
+            @per-page-change="onHistoryPerPageChange"
+          />
         </div>
       </div>
     </div>
@@ -305,11 +418,12 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted } from 'vue';
 import { useAuthStore } from '../stores/auth';
 import api from '../api/axios';
 import { formatCurrency, formatDate } from '../utils/formatters';
 import ReceiptModal from '../components/ReceiptModal.vue';
+import PaginationControls from '../components/PaginationControls.vue';
 import {
   ShoppingCart,
   Clock,
@@ -319,6 +433,9 @@ import {
   Receipt,
   AlertCircle,
   ShieldAlert,
+  Calendar,
+  X,
+  Filter,
 } from '@lucide/vue';
 
 const authStore = useAuthStore();
@@ -333,9 +450,23 @@ const transactionDate = ref(new Date().toISOString().split('T')[0]);
 const checkoutError = ref(null);
 const processingCheckout = ref(false);
 
-// History
+// History Table State
 const historyTransactions = ref([]);
 const loadingHistory = ref(false);
+const historySearch = ref('');
+const historyStartDate = ref('');
+const historyEndDate = ref('');
+const historySortBy = ref('date_desc');
+const showDateFilter = ref(false);
+
+const historyPagination = reactive({
+  currentPage: 1,
+  lastPage: 1,
+  total: 0,
+  from: 0,
+  to: 0,
+  perPage: 10,
+});
 
 // Receipt Modal
 const showReceiptModal = ref(false);
@@ -363,7 +494,7 @@ const calculatedTotal = computed(() => {
 async function fetchProducts() {
   loadingProducts.value = true;
   try {
-    const res = await api.get('/products?per_page=50');
+    const res = await api.get('/products?per_page=100');
     products.value = res.data.data || [];
   } catch (err) {
     console.error('Failed to load products', err);
@@ -372,11 +503,78 @@ async function fetchProducts() {
   }
 }
 
-async function fetchHistory() {
+let historyFilterTimeout = null;
+function handleHistoryFilterChange() {
+  clearTimeout(historyFilterTimeout);
+  historyFilterTimeout = setTimeout(() => {
+    fetchHistory(1);
+  }, 300);
+}
+
+function resetHistoryFilters() {
+  historySearch.value = '';
+  historyStartDate.value = '';
+  historyEndDate.value = '';
+  historySortBy.value = 'date_desc';
+  showDateFilter.value = false;
+  fetchHistory(1);
+}
+
+function onHistoryPageChange(page) {
+  fetchHistory(page);
+}
+
+function onHistoryPerPageChange(newPerPage) {
+  historyPagination.perPage = newPerPage;
+  fetchHistory(1);
+}
+
+async function fetchHistory(page = historyPagination.currentPage) {
   loadingHistory.value = true;
   try {
-    const res = await api.get('/transactions?per_page=50');
+    const [field, dir] = historySortBy.value.split('_');
+    const sortFieldMap = {
+      date: 'transaction_date',
+      total: 'total',
+      id: 'id',
+    };
+
+    const params = {
+      page,
+      per_page: historyPagination.perPage,
+      sort_by: sortFieldMap[field] || 'transaction_date',
+      sort_dir: dir || 'desc',
+    };
+
+    if (historySearch.value.trim()) {
+      params.search = historySearch.value.trim();
+    }
+    if (historyStartDate.value) {
+      params.start_date = historyStartDate.value;
+    }
+    if (historyEndDate.value) {
+      params.end_date = historyEndDate.value;
+    }
+
+    const res = await api.get('/transactions', { params });
     historyTransactions.value = res.data.data || [];
+
+    // Capture meta pagination
+    const meta = res.data.meta;
+    if (meta) {
+      historyPagination.currentPage = meta.current_page || 1;
+      historyPagination.lastPage = meta.last_page || 1;
+      historyPagination.total = meta.total || 0;
+      historyPagination.from = meta.from || 0;
+      historyPagination.to = meta.to || 0;
+      historyPagination.perPage = meta.per_page || historyPagination.perPage;
+    } else {
+      historyPagination.currentPage = 1;
+      historyPagination.lastPage = 1;
+      historyPagination.total = historyTransactions.value.length;
+      historyPagination.from = historyTransactions.value.length > 0 ? 1 : 0;
+      historyPagination.to = historyTransactions.value.length;
+    }
   } catch (err) {
     console.error('Failed to load history', err);
   } finally {
@@ -441,7 +639,7 @@ async function handleCheckout() {
     showReceiptModal.value = true;
 
     // Refresh history
-    await fetchHistory();
+    await fetchHistory(1);
   } catch (err) {
     checkoutError.value =
       err.response?.data?.message || 'Gagal memproses transaksi. Cek kembali item yang dipilih.';

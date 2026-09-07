@@ -183,14 +183,36 @@
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
       <!-- Daily Aggregations (7 cols) -->
       <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden break-inside-avoid">
-        <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+        <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h3 class="font-bold text-base text-slate-900">Agregasi Harian Server-Side</h3>
             <p class="text-xs text-slate-500 mt-0.5">Dihitung langsung via query database SQL</p>
           </div>
-          <span class="text-xs font-mono text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg font-semibold border border-indigo-100">
-            {{ reportData?.daily_breakdown?.length || 0 }} Hari Aktif
-          </span>
+
+          <div class="flex items-center space-x-2">
+            <!-- Search Date in daily breakdown -->
+            <div class="relative w-40 sm:w-48">
+              <Search class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+              <input
+                v-model="dailySearch"
+                @input="handleDailyFilter"
+                type="text"
+                placeholder="Cari tanggal..."
+                class="w-full pl-7 pr-6 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              />
+              <button
+                v-if="dailySearch"
+                @click="dailySearch = ''; handleDailyFilter()"
+                class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                <X class="w-3 h-3" />
+              </button>
+            </div>
+
+            <span class="text-xs font-mono text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg font-semibold border border-indigo-100 shrink-0">
+              {{ filteredDailyBreakdown.length }} Hari
+            </span>
+          </div>
         </div>
 
         <div v-if="loading" class="p-12 text-center text-slate-400 text-sm">
@@ -198,78 +220,144 @@
           <p>Mengagregasi data transaksi...</p>
         </div>
 
-        <div v-else-if="!reportData?.daily_breakdown || reportData.daily_breakdown.length === 0" class="p-12 text-center text-slate-400 text-xs">
-          Tidak ada transaksi tercatat dalam rentang tanggal ini.
+        <div v-else-if="filteredDailyBreakdown.length === 0" class="p-12 text-center text-slate-400 text-xs">
+          {{ dailySearch ? 'Tidak ada data harian yang cocok dengan kata kunci tanggal.' : 'Tidak ada transaksi tercatat dalam rentang tanggal ini.' }}
         </div>
 
-        <div v-else class="overflow-x-auto">
-          <table class="w-full text-left text-sm">
-            <thead class="bg-slate-50/80 text-xs font-semibold uppercase tracking-wider text-slate-500 border-b border-slate-100">
-              <tr>
-                <th class="px-5 py-3">Tanggal</th>
-                <th class="px-5 py-3 text-center">Jumlah Transaksi</th>
-                <th class="px-5 py-3 text-right">Total Omzet Harian</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100 text-xs">
-              <tr v-for="daily in reportData.daily_breakdown" :key="daily.transaction_date" class="hover:bg-slate-50/70">
-                <td class="px-5 py-3 font-semibold text-slate-800">
-                  {{ formatDate(daily.transaction_date) }}
-                </td>
-                <td class="px-5 py-3 text-center">
-                  <span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full font-bold">
-                    {{ daily.transaction_count }}
-                  </span>
-                </td>
-                <td class="px-5 py-3 text-right font-extrabold text-indigo-600">
-                  {{ formatCurrency(daily.daily_revenue) }}
-                </td>
-              </tr>
-            </tbody>
-            <tfoot class="bg-slate-50 border-t-2 border-slate-200 text-xs font-bold text-slate-800">
-              <tr>
-                <td class="px-5 py-3">TOTAL ({{ reportData.daily_breakdown.length }} Hari)</td>
-                <td class="px-5 py-3 text-center">{{ totalCalculatedTrx }} Trx</td>
-                <td class="px-5 py-3 text-right text-indigo-600 font-extrabold">
-                  {{ formatCurrency(totalCalculatedRevenue) }}
-                </td>
-              </tr>
-            </tfoot>
-          </table>
+        <div v-else>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+              <thead class="bg-slate-50/80 text-xs font-semibold uppercase tracking-wider text-slate-500 border-b border-slate-100">
+                <tr>
+                  <th class="px-5 py-3">Tanggal</th>
+                  <th class="px-5 py-3 text-center">Jumlah Transaksi</th>
+                  <th class="px-5 py-3 text-right">Total Omzet Harian</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 text-xs">
+                <tr v-for="daily in paginatedDailyBreakdown" :key="daily.transaction_date" class="hover:bg-slate-50/70">
+                  <td class="px-5 py-3 font-semibold text-slate-800">
+                    {{ formatDate(daily.transaction_date) }}
+                  </td>
+                  <td class="px-5 py-3 text-center">
+                    <span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full font-bold">
+                      {{ daily.transaction_count }}
+                    </span>
+                  </td>
+                  <td class="px-5 py-3 text-right font-extrabold text-indigo-600">
+                    {{ formatCurrency(daily.daily_revenue) }}
+                  </td>
+                </tr>
+              </tbody>
+              <tfoot class="bg-slate-50 border-t-2 border-slate-200 text-xs font-bold text-slate-800">
+                <tr>
+                  <td class="px-5 py-3">TOTAL ({{ reportData?.daily_breakdown?.length || 0 }} Hari Aktif)</td>
+                  <td class="px-5 py-3 text-center">{{ totalCalculatedTrx }} Trx</td>
+                  <td class="px-5 py-3 text-right text-indigo-600 font-extrabold">
+                    {{ formatCurrency(totalCalculatedRevenue) }}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <!-- Pagination for Daily Breakdown -->
+          <PaginationControls
+            :current-page="dailyPagination.currentPage"
+            :last-page="dailyPagination.lastPage"
+            :total="dailyPagination.total"
+            :from="dailyPagination.from"
+            :to="dailyPagination.to"
+            :per-page="dailyPagination.perPage"
+            :per-page-options="[5, 10, 20]"
+            :loading="loading"
+            @page-change="onDailyPageChange"
+            @per-page-change="onDailyPerPageChange"
+          />
         </div>
       </div>
 
       <!-- Detail Transactions in Period (5 cols) -->
       <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden break-inside-avoid">
-        <div class="p-5 border-b border-slate-100">
-          <h3 class="font-bold text-base text-slate-900">Daftar Transaksi Terkait</h3>
-          <p class="text-xs text-slate-500 mt-0.5">Transaksi tenant dalam rentang filter</p>
+        <div class="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 class="font-bold text-base text-slate-900">Daftar Transaksi Terkait</h3>
+            <p class="text-xs text-slate-500 mt-0.5">Transaksi tenant dalam rentang filter</p>
+          </div>
+
+          <!-- Search related transactions -->
+          <div class="relative w-full sm:w-44">
+            <Search class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+            <input
+              v-model="relatedTrxSearch"
+              @input="handleRelatedFilter"
+              type="text"
+              placeholder="Cari kode/kasir..."
+              class="w-full pl-7 pr-6 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            />
+            <button
+              v-if="relatedTrxSearch"
+              @click="relatedTrxSearch = ''; handleRelatedFilter()"
+              class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+            >
+              <X class="w-3 h-3" />
+            </button>
+          </div>
         </div>
 
         <div v-if="loading" class="p-12 text-center text-slate-400 text-sm">
+          <span class="inline-block w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mr-2"></span>
           Memuat rincian transaksi...
         </div>
 
-        <div v-else-if="!reportData?.recent_transactions || reportData.recent_transactions.length === 0" class="p-12 text-center text-slate-400 text-xs">
-          Belum ada transaksi.
+        <div v-else-if="filteredRelatedTransactions.length === 0" class="p-12 text-center text-slate-400 text-xs">
+          {{ relatedTrxSearch ? 'Tidak ada transaksi yang cocok dengan pencarian.' : 'Belum ada transaksi dalam periode ini.' }}
         </div>
 
-        <div v-else class="divide-y divide-slate-100 max-h-96 overflow-y-auto">
-          <div
-            v-for="trx in reportData.recent_transactions"
-            :key="trx.id"
-            class="p-4 hover:bg-slate-50/70 transition-colors flex items-center justify-between"
-          >
-            <div>
-              <p class="text-xs font-bold font-mono text-indigo-600">{{ trx.transaction_code }}</p>
-              <p class="text-[11px] text-slate-500 mt-0.5">
-                {{ formatDate(trx.transaction_date) }} &bull; Kasir: {{ trx.user?.name }}
-              </p>
-            </div>
-            <span class="text-xs font-extrabold text-slate-900">
-              {{ formatCurrency(trx.total) }}
-            </span>
+        <div v-else>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50/80 text-[10px] font-semibold uppercase tracking-wider text-slate-500 border-b border-slate-100">
+                <tr>
+                  <th class="px-4 py-2.5">Kode</th>
+                  <th class="px-4 py-2.5">Tgl & Kasir</th>
+                  <th class="px-4 py-2.5 text-right">Total</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                <tr
+                  v-for="trx in paginatedRelatedTransactions"
+                  :key="trx.id"
+                  class="hover:bg-slate-50/70 transition-colors"
+                >
+                  <td class="px-4 py-3 font-mono font-bold text-indigo-600">
+                    {{ trx.transaction_code }}
+                  </td>
+                  <td class="px-4 py-3 text-slate-600">
+                    <div>{{ formatDate(trx.transaction_date) }}</div>
+                    <div class="text-[10px] text-slate-400">Oleh: {{ trx.user?.name || 'Kasir' }}</div>
+                  </td>
+                  <td class="px-4 py-3 text-right font-extrabold text-slate-900">
+                    {{ formatCurrency(trx.total) }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
+
+          <!-- Pagination for Related Transactions -->
+          <PaginationControls
+            :current-page="relatedPagination.currentPage"
+            :last-page="relatedPagination.lastPage"
+            :total="relatedPagination.total"
+            :from="relatedPagination.from"
+            :to="relatedPagination.to"
+            :per-page="relatedPagination.perPage"
+            :per-page-options="[5, 10, 20]"
+            :loading="loading"
+            @page-change="onRelatedPageChange"
+            @per-page-change="onRelatedPerPageChange"
+          />
         </div>
       </div>
     </div>
@@ -305,6 +393,7 @@ import { formatCurrency, formatDate } from '../utils/formatters';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
+import PaginationControls from '../components/PaginationControls.vue';
 import {
   ShieldCheck,
   Filter,
@@ -312,6 +401,8 @@ import {
   FileText,
   FileSpreadsheet,
   Printer,
+  Search,
+  X,
 } from '@lucide/vue';
 
 const authStore = useAuthStore();
@@ -322,6 +413,122 @@ const filters = reactive({
   startDate: '',
   endDate: '',
 });
+
+// Daily Breakdown Search & Pagination
+const dailySearch = ref('');
+const dailyPagination = reactive({
+  currentPage: 1,
+  lastPage: 1,
+  total: 0,
+  from: 0,
+  to: 0,
+  perPage: 5,
+});
+
+const filteredDailyBreakdown = computed(() => {
+  const list = reportData.value?.daily_breakdown || [];
+  if (!dailySearch.value.trim()) return list;
+  const q = dailySearch.value.trim().toLowerCase();
+  return list.filter((d) => {
+    return (d.transaction_date || '').toLowerCase().includes(q);
+  });
+});
+
+const paginatedDailyBreakdown = computed(() => {
+  const start = (dailyPagination.currentPage - 1) * dailyPagination.perPage;
+  return filteredDailyBreakdown.value.slice(start, start + dailyPagination.perPage);
+});
+
+function updateDailyPaginationMeta() {
+  const total = filteredDailyBreakdown.value.length;
+  dailyPagination.total = total;
+  dailyPagination.lastPage = Math.max(1, Math.ceil(total / dailyPagination.perPage));
+  if (dailyPagination.currentPage > dailyPagination.lastPage) {
+    dailyPagination.currentPage = dailyPagination.lastPage;
+  }
+  if (total === 0) {
+    dailyPagination.from = 0;
+    dailyPagination.to = 0;
+  } else {
+    dailyPagination.from = (dailyPagination.currentPage - 1) * dailyPagination.perPage + 1;
+    dailyPagination.to = Math.min(dailyPagination.currentPage * dailyPagination.perPage, total);
+  }
+}
+
+function handleDailyFilter() {
+  dailyPagination.currentPage = 1;
+  updateDailyPaginationMeta();
+}
+
+function onDailyPageChange(page) {
+  dailyPagination.currentPage = page;
+  updateDailyPaginationMeta();
+}
+
+function onDailyPerPageChange(newPerPage) {
+  dailyPagination.perPage = newPerPage;
+  dailyPagination.currentPage = 1;
+  updateDailyPaginationMeta();
+}
+
+// Related Transactions Search & Pagination
+const relatedTrxSearch = ref('');
+const relatedPagination = reactive({
+  currentPage: 1,
+  lastPage: 1,
+  total: 0,
+  from: 0,
+  to: 0,
+  perPage: 5,
+});
+
+const filteredRelatedTransactions = computed(() => {
+  const list = reportData.value?.recent_transactions || [];
+  if (!relatedTrxSearch.value.trim()) return list;
+  const q = relatedTrxSearch.value.trim().toLowerCase();
+  return list.filter((trx) => {
+    const code = (trx.transaction_code || '').toLowerCase();
+    const user = (trx.user?.name || '').toLowerCase();
+    return code.includes(q) || user.includes(q);
+  });
+});
+
+const paginatedRelatedTransactions = computed(() => {
+  const start = (relatedPagination.currentPage - 1) * relatedPagination.perPage;
+  return filteredRelatedTransactions.value.slice(start, start + relatedPagination.perPage);
+});
+
+function updateRelatedPaginationMeta() {
+  const total = filteredRelatedTransactions.value.length;
+  relatedPagination.total = total;
+  relatedPagination.lastPage = Math.max(1, Math.ceil(total / relatedPagination.perPage));
+  if (relatedPagination.currentPage > relatedPagination.lastPage) {
+    relatedPagination.currentPage = relatedPagination.lastPage;
+  }
+  if (total === 0) {
+    relatedPagination.from = 0;
+    relatedPagination.to = 0;
+  } else {
+    relatedPagination.from = (relatedPagination.currentPage - 1) * relatedPagination.perPage + 1;
+    relatedPagination.to = Math.min(relatedPagination.currentPage * relatedPagination.perPage, total);
+  }
+}
+
+function handleRelatedFilter() {
+  relatedPagination.currentPage = 1;
+  updateRelatedPaginationMeta();
+}
+
+function onRelatedPageChange(page) {
+  relatedPagination.currentPage = page;
+  updateRelatedPaginationMeta();
+}
+
+function onRelatedPerPageChange(newPerPage) {
+  relatedPagination.perPage = newPerPage;
+  relatedPagination.currentPage = 1;
+  updateRelatedPaginationMeta();
+}
 
 const printDateTimeString = computed(() => {
   return new Date().toLocaleString('id-ID', {
@@ -374,6 +581,8 @@ async function loadReport() {
 
     const res = await api.get('/reports', { params });
     reportData.value = res.data.data;
+    updateDailyPaginationMeta();
+    updateRelatedPaginationMeta();
   } catch (err) {
     console.error('Failed to load reports', err);
   } finally {

@@ -19,6 +19,18 @@ class TransactionController extends Controller
     {
         $query = Transaction::with(['user', 'items.product']);
 
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('transaction_code', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($uq) use ($search) {
+                        $uq->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('items.product', function ($pq) use ($search) {
+                        $pq->where('name', 'like', "%{$search}%");
+                    });
+            });
+        }
+
         if ($startDate = $request->input('start_date')) {
             $query->where('transaction_date', '>=', $startDate);
         }
@@ -27,10 +39,21 @@ class TransactionController extends Controller
             $query->where('transaction_date', '<=', $endDate);
         }
 
-        $perPage = (int) $request->input('per_page', 15);
-        $transactions = $query->orderBy('transaction_date', 'desc')
-            ->orderBy('id', 'desc')
-            ->paginate($perPage);
+        if ($userId = $request->input('user_id')) {
+            $query->where('user_id', $userId);
+        }
+
+        $sortBy = $request->input('sort_by', 'transaction_date');
+        $sortDir = strtolower($request->input('sort_dir', 'desc')) === 'asc' ? 'asc' : 'desc';
+
+        if (in_array($sortBy, ['transaction_date', 'total', 'transaction_code', 'id'])) {
+            $query->orderBy($sortBy, $sortDir)->orderBy('id', $sortDir);
+        } else {
+            $query->orderBy('transaction_date', 'desc')->orderBy('id', 'desc');
+        }
+
+        $perPage = (int) $request->input('per_page', 10);
+        $transactions = $query->paginate($perPage);
 
         return TransactionResource::collection($transactions);
     }
