@@ -212,3 +212,13 @@ Semua endpoint dilayani di bawah prefix `/api`. Request yang terautentikasi meny
 | `GET` | `/api/transactions/{id}` | Owner & Staff | Detail struk transaksi |
 | `DELETE` | `/api/transactions/{id}` | **Ditolak** | Mengembalikan **405 Method Not Allowed** |
 | `GET` | `/api/reports` | **Owner Only** | Agregasi omzet MTD & filter tanggal (Staff ditolak 403) |
+
+---
+
+## 📮 Postman Collection & Environment
+
+Koleksi Postman v2.1.0 dan file Environment variabel tersedia di direktori root [`../postman/`](file:///c:/xampp/htdocs/oka-iki-indonesia/technical-test/postman):
+- **Collection**: [`Mini_ERP_MultiTenant_API.postman_collection.json`](file:///c:/xampp/htdocs/oka-iki-indonesia/technical-test/postman/Mini_ERP_MultiTenant_API.postman_collection.json)
+- **Environment**: [`Mini_ERP_Local.postman_environment.json`](file:///c:/xampp/htdocs/oka-iki-indonesia/technical-test/postman/Mini_ERP_Local.postman_environment.json)
+- **Dokumentasi & Panduan**: [`postman/README.md`](file:///c:/xampp/htdocs/oka-iki-indonesia/technical-test/postman/README.md)
+

@@ -1,0 +1,1287 @@
+{
+  "info": {
+    "_postman_id": "8f3b2a19-4567-4e89-a1b2-c3d4e5f60718",
+    "name": "Mini ERP Multi-Tenant SaaS API",
+    "description": "# Mini ERP Multi-Tenant SaaS REST API\n### PT Oka Iki Indonesia – Technical Test\n\nKoleksi Postman ini dirancang untuk menguji seluruh fungsionalitas backend **Laravel 11 REST API** dengan standar ERP enterprise:\n\n1. **Multi-Tenancy Isolation**: Pengujian pembatasan data antar penyewa (*Tenant A* vs *Tenant B*) dengan pencegahan *cross-tenant data leakage* (Zero Data Leakage).\n2. **Authentication & Session**: Autentikasi Sanctum berbasis token Bearer dengan *auto-capture token* ke Environment Postman.\n3. **Role-Based Access Control (RBAC)**: Validasi hak akses bertingkat antara `owner` (full privilege termasuk hapus produk dan laporan omzet) dan `staff` (kasir & input produk, dilarang hapus produk dan akses laporan).\n4. **Katalog Produk**: CRUD produk, soft delete, pagination, sorting, dan multi-filter.\n5. **Transaksi ERP & Price Snapshotting**: POS checkout atomik, pembekuan harga transaksi historis (*snapshot pricing*), dan sifat transaksi *immutable* (405 Method Not Allowed saat dihapus).\n6. **Laporan Keuangan & Omzet**: Agregasi SQL omzet dan volume order bulan berjalan maupun filter rentang tanggal dinamis.\n\n---\n\n### 🚀 Petunjuk Penggunaan Cepat:\n1. Pilih Environment **Mini ERP - Local Environment** di pojok kanan atas Postman.\n2. Jalankan request **1.1 Login - Owner Tenant A**.\n3. Skrip otomatis akan menyimpan `token`, `user_role`, dan `tenant_name` ke Environment.\n4. Seluruh request berikutnya akan otomatis menggunakan token tersebut!",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "1. Authentication",
+      "description": "Endpoint autentikasi (Login, Session Me, Logout). Token otomatis disimpan ke variabel environment `{{token}}` saat login berhasil.",
+      "item": [
+        {
+          "name": "1.1 Login - Owner Tenant A (PT Nusantara)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Token received and saved to environment\", function () {",
+                  "    var res = pm.response.json();",
+                  "    pm.expect(res.token).to.be.a('string');",
+                  "    pm.expect(res.user.role).to.eql('owner');",
+                  "    pm.expect(res.user.tenant.name).to.eql('PT Nusantara Niaga Mandiri');",
+                  "    ",
+                  "    pm.environment.set(\"token\", res.token);",
+                  "    pm.environment.set(\"user_role\", res.user.role);",
+                  "    pm.environment.set(\"tenant_name\", res.user.tenant.name);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{owner_a_email}}\",\n  \"password\": \"{{owner_a_password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/login",
+              "host": ["{{base_url}}"],
+              "path": ["login"]
+            },
+            "description": "Login sebagai Owner Tenant 1 (PT Nusantara Niaga Mandiri). Memiliki hak akses penuh termasuk melihat laporan omzet dan menghapus produk."
+          },
+          "response": []
+        },
+        {
+          "name": "1.2 Login - Staff Tenant A (PT Nusantara)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Token received for Staff Tenant A\", function () {",
+                  "    var res = pm.response.json();",
+                  "    pm.expect(res.token).to.be.a('string');",
+                  "    pm.expect(res.user.role).to.eql('staff');",
+                  "    ",
+                  "    pm.environment.set(\"token\", res.token);",
+                  "    pm.environment.set(\"user_role\", res.user.role);",
+                  "    pm.environment.set(\"tenant_name\", res.user.tenant.name);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{staff_a_email}}\",\n  \"password\": \"{{staff_a_password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/login",
+              "host": ["{{base_url}}"],
+              "path": ["login"]
+            },
+            "description": "Login sebagai Staff Tenant 1 (PT Nusantara Niaga Mandiri). Dibatasi: tidak bisa hapus produk dan tidak bisa akses laporan omzet."
+          },
+          "response": []
+        },
+        {
+          "name": "1.3 Login - Owner Tenant B (CV Sentosa)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Token received for Owner Tenant B\", function () {",
+                  "    var res = pm.response.json();",
+                  "    pm.expect(res.token).to.be.a('string');",
+                  "    pm.expect(res.user.role).to.eql('owner');",
+                  "    pm.expect(res.user.tenant.name).to.eql('CV Sentosa Solusindo');",
+                  "    ",
+                  "    pm.environment.set(\"token\", res.token);",
+                  "    pm.environment.set(\"user_role\", res.user.role);",
+                  "    pm.environment.set(\"tenant_name\", res.user.tenant.name);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{owner_b_email}}\",\n  \"password\": \"{{owner_b_password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/login",
+              "host": ["{{base_url}}"],
+              "path": ["login"]
+            },
+            "description": "Login sebagai Owner Tenant 2 (CV Sentosa Solusindo). Digunakan untuk menguji isolasi data multi-tenant."
+          },
+          "response": []
+        },
+        {
+          "name": "1.4 Login - Staff Tenant B (CV Sentosa)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Token received for Staff Tenant B\", function () {",
+                  "    var res = pm.response.json();",
+                  "    pm.expect(res.token).to.be.a('string');",
+                  "    pm.expect(res.user.role).to.eql('staff');",
+                  "    ",
+                  "    pm.environment.set(\"token\", res.token);",
+                  "    pm.environment.set(\"user_role\", res.user.role);",
+                  "    pm.environment.set(\"tenant_name\", res.user.tenant.name);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{staff_b_email}}\",\n  \"password\": \"{{staff_b_password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/login",
+              "host": ["{{base_url}}"],
+              "path": ["login"]
+            },
+            "description": "Login sebagai Staff Tenant 2 (CV Sentosa Solusindo)."
+          },
+          "response": []
+        },
+        {
+          "name": "1.5 Login - Negative Test (Invalid Password)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 422 Unprocessable Content\", function () {",
+                  "    pm.response.to.have.status(422);",
+                  "});",
+                  "",
+                  "pm.test(\"Returns validation error message\", function () {",
+                  "    var res = pm.response.json();",
+                  "    pm.expect(res.errors).to.have.property('email');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{owner_a_email}}\",\n  \"password\": \"wrongpassword_test\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/login",
+              "host": ["{{base_url}}"],
+              "path": ["login"]
+            },
+            "description": "Pengujian login dengan password salah. Harus mengembalikan HTTP 422 dengan pesan validasi error."
+          },
+          "response": []
+        },
+        {
+          "name": "1.6 Get Current User & Tenant Profile (/me)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"User profile and tenant object are returned\", function () {",
+                  "    var res = pm.response.json();",
+                  "    pm.expect(res.user).to.have.property('id');",
+                  "    pm.expect(res.user).to.have.property('email');",
+                  "    pm.expect(res.user).to.have.property('role');",
+                  "    pm.expect(res.user).to.have.property('tenant');",
+                  "    pm.expect(res.user.tenant).to.have.property('id');",
+                  "    pm.expect(res.user.tenant).to.have.property('name');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/me",
+              "host": ["{{base_url}}"],
+              "path": ["me"]
+            },
+            "description": "Mengambil informasi profil user yang sedang aktif beserta data tenant yang dinaunginya."
+          },
+          "response": []
+        },
+        {
+          "name": "1.7 Logout (/logout)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Logout successful message returned\", function () {",
+                  "    var res = pm.response.json();",
+                  "    pm.expect(res.message).to.include('Logout berhasil');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/logout",
+              "host": ["{{base_url}}"],
+              "path": ["logout"]
+            },
+            "description": "Mencabut (revoke) personal access token yang sedang digunakan."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Products Module",
+      "description": "Endpoint manajemen katalog produk (CRUD + Soft Delete). Terisolasi ketat oleh TenantScope.",
+      "item": [
+        {
+          "name": "2.1 Get All Products (Paginated)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Data returns product list with pagination\", function () {",
+                  "    var res = pm.response.json();",
+                  "    pm.expect(res.data).to.be.an('array');",
+                  "    pm.expect(res).to.have.property('meta');",
+                  "    ",
+                  "    if (res.data.length > 0) {",
+                  "        pm.environment.set(\"product_id\", res.data[0].id);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/products?per_page=10&page=1",
+              "host": ["{{base_url}}"],
+              "path": ["products"],
+              "query": [
+                {
+                  "key": "per_page",
+                  "value": "10"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Menampilkan daftar seluruh produk milik tenant yang sedang login dengan pagination standar Laravel Resource Collection."
+          },
+          "response": []
+        },
+        {
+          "name": "2.2 Search & Filter Products",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Filtered results match criteria\", function () {",
+                  "    var res = pm.response.json();",
+                  "    pm.expect(res.data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/products?search=ERP&min_price=1000000&max_price=20000000&sort_by=price&sort_dir=desc",
+              "host": ["{{base_url}}"],
+              "path": ["products"],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "ERP",
+                  "description": "Filter pencarian nama produk"
+                },
+                {
+                  "key": "min_price",
+                  "value": "1000000",
+                  "description": "Filter harga minimum"
+                },
+                {
+                  "key": "max_price",
+                  "value": "20000000",
+                  "description": "Filter harga maksimum"
+                },
+                {
+                  "key": "sort_by",
+                  "value": "price",
+                  "description": "Urutkan berdasarkan: name, price, created_at, id"
+                },
+                {
+                  "key": "sort_dir",
+                  "value": "desc",
+                  "description": "Arah urutan: asc atau desc"
+                }
+              ]
+            },
+            "description": "Menampilkan daftar produk dengan filter kata kunci pencarian, rentang harga nominal, dan opsi sorting."
+          },
+          "response": []
+        },
+        {
+          "name": "2.3 Create Product",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Product created and assigned to active tenant\", function () {",
+                  "    var res = pm.response.json();",
+                  "    pm.expect(res.product).to.have.property('id');",
+                  "    pm.expect(res.product.name).to.eql(\"Add-on API Integration Gateway\");",
+                  "    pm.expect(parseFloat(res.product.price)).to.eql(3500000.00);",
+                  "    ",
+                  "    // Save newly created product ID for next requests",
+                  "    pm.environment.set(\"product_id\", res.product.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Add-on API Integration Gateway\",\n  \"price\": 3500000.00\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/products",
+              "host": ["{{base_url}}"],
+              "path": ["products"]
+            },
+            "description": "Membuat produk baru. Backend otomatis mengisi `tenant_id` dari user login melalui Trait `BelongsToTenant`."
+          },
+          "response": []
+        },
+        {
+          "name": "2.4 Get Product Detail",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Product detail has accurate fields\", function () {",
+                  "    var res = pm.response.json();",
+                  "    pm.expect(res.product).to.have.property('id');",
+                  "    pm.expect(res.product).to.have.property('name');",
+                  "    pm.expect(res.product).to.have.property('price');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/products/{{product_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["products", "{{product_id}}"]
+            },
+            "description": "Melihat informasi detail satu produk berdasarkan ID."
+          },
+          "response": []
+        },
+        {
+          "name": "2.5 Update Product",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Product data updated successfully\", function () {",
+                  "    var res = pm.response.json();",
+                  "    pm.expect(res.product.name).to.include(\"Revised\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Add-on API Integration Gateway (Revised)\",\n  \"price\": 3750000.00\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/products/{{product_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["products", "{{product_id}}"]
+            },
+            "description": "Memperbarui nama atau harga produk master."
+          },
+          "response": []
+        },
+        {
+          "name": "2.6 Delete Product (Soft Delete - Owner Only)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Product soft deleted successfully\", function () {",
+                  "    var res = pm.response.json();",
+                  "    pm.expect(res.message).to.include('soft delete');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/products/{{product_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["products", "{{product_id}}"]
+            },
+            "description": "Menghapus produk dengan metode Soft Delete. Hanya dapat dilakukan oleh user dengan role `owner`. Data historis transaksi masa lalu tetap utuh."
+          },
+          "response": []
+        },
+        {
+          "name": "2.7 Validation Error - Create Product with Negative Price",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 422 Unprocessable Content\", function () {",
+                  "    pm.response.to.have.status(422);",
+                  "});",
+                  "",
+                  "pm.test(\"Validation error on price and name\", function () {",
+                  "    var res = pm.response.json();",
+                  "    pm.expect(res.errors).to.have.property('name');",
+                  "    pm.expect(res.errors).to.have.property('price');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"\",\n  \"price\": -50000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/products",
+              "host": ["{{base_url}}"],
+              "path": ["products"]
+            },
+            "description": "Pengujian validasi form request saat mengirimkan nama kosong dan harga negatif."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Transactions Module",
+      "description": "Endpoint kasir dan transaksi. Mengimplementasikan Price Snapshotting, Database Transaction Atomicity, dan Transaksi Bersifat Immutable.",
+      "item": [
+        {
+          "name": "3.1 Get All Transactions (Paginated)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Transactions array with pagination meta\", function () {",
+                  "    var res = pm.response.json();",
+                  "    pm.expect(res.data).to.be.an('array');",
+                  "    pm.expect(res).to.have.property('meta');",
+                  "    ",
+                  "    if (res.data.length > 0) {",
+                  "        pm.environment.set(\"transaction_id\", res.data[0].id);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/transactions?per_page=10&page=1",
+              "host": ["{{base_url}}"],
+              "path": ["transactions"],
+              "query": [
+                {
+                  "key": "per_page",
+                  "value": "10"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Menampilkan daftar seluruh riwayat transaksi milik tenant yang aktif."
+          },
+          "response": []
+        },
+        {
+          "name": "3.2 Filter Transactions by Date Range & Search",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Filtered transactions returned\", function () {",
+                  "    var res = pm.response.json();",
+                  "    pm.expect(res.data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/transactions?start_date=2026-08-01&end_date=2026-09-08&sort_by=transaction_date&sort_dir=desc",
+              "host": ["{{base_url}}"],
+              "path": ["transactions"],
+              "query": [
+                {
+                  "key": "start_date",
+                  "value": "2026-08-01",
+                  "description": "Tanggal awal transaksi (YYYY-MM-DD)"
+                },
+                {
+                  "key": "end_date",
+                  "value": "2026-09-08",
+                  "description": "Tanggal akhir transaksi (YYYY-MM-DD)"
+                },
+                {
+                  "key": "sort_by",
+                  "value": "transaction_date",
+                  "description": "Urutkan berdasarkan: transaction_date, total, transaction_code, id"
+                },
+                {
+                  "key": "sort_dir",
+                  "value": "desc",
+                  "description": "asc atau desc"
+                }
+              ]
+            },
+            "description": "Memfilter transaksi berdasarkan rentang tanggal dan kriteria pengurutan."
+          },
+          "response": []
+        },
+        {
+          "name": "3.3 Create Transaction (Atomic POS Checkout)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 Created\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Transaction created with atomic price snapshots\", function () {",
+                  "    var res = pm.response.json();",
+                  "    pm.expect(res.transaction).to.have.property('id');",
+                  "    pm.expect(res.transaction).to.have.property('transaction_code');",
+                  "    pm.expect(res.transaction).to.have.property('total');",
+                  "    pm.expect(res.transaction.items).to.be.an('array').with.lengthOf(2);",
+                  "    ",
+                  "    // Check price snapshotting exists on each item",
+                  "    var firstItem = res.transaction.items[0];",
+                  "    pm.expect(firstItem).to.have.property('price_at_transaction');",
+                  "    pm.expect(firstItem).to.have.property('subtotal');",
+                  "    ",
+                  "    pm.environment.set(\"transaction_id\", res.transaction.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transaction_date\": \"2026-09-08\",\n  \"items\": [\n    {\n      \"product_id\": 1,\n      \"qty\": 2\n    },\n    {\n      \"product_id\": 2,\n      \"qty\": 1\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/transactions",
+              "host": ["{{base_url}}"],
+              "path": ["transactions"]
+            },
+            "description": "Membuat transaksi kasir baru. Backend mengambil harga produk langsung dari database (price snapshotting), menghitung subtotal dan total menggunakan bcmath presisi tinggi, dan dibungkus dalam DB::transaction() atomik."
+          },
+          "response": []
+        },
+        {
+          "name": "3.4 Get Transaction Detail",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Transaction detail includes creator and item breakdowns\", function () {",
+                  "    var res = pm.response.json();",
+                  "    pm.expect(res.transaction).to.have.property('id');",
+                  "    pm.expect(res.transaction).to.have.property('creator');",
+                  "    pm.expect(res.transaction).to.have.property('items');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/transactions/{{transaction_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["transactions", "{{transaction_id}}"]
+            },
+            "description": "Melihat rincian nota transaksi lengkap termasuk informasi kasir pembuat (*creator*) dan item transaksi."
+          },
+          "response": []
+        },
+        {
+          "name": "3.5 Delete Transaction (Strict ERP Immutability - Expect 405)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 405 Method Not Allowed\", function () {",
+                  "    pm.response.to.have.status(405);",
+                  "});",
+                  "",
+                  "pm.test(\"Refusal message mentions ERP data integrity\", function () {",
+                  "    var res = pm.response.json();",
+                  "    pm.expect(res.message).to.include('integritas data ERP');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/transactions/{{transaction_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["transactions", "{{transaction_id}}"]
+            },
+            "description": "Prinsip ERP Enterprise: Transaksi yang sudah terbit bersifat Immutable (tidak dapat dihapus sembarangan). Endpoint ini sengaja mengembalikan 405 Method Not Allowed."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. Reports Module",
+      "description": "Laporan omzet dan analitik penjualan. Wajib role `owner` (dilindungi middleware role:owner).",
+      "item": [
+        {
+          "name": "4.1 Get Revenue & Sales Report (Month-to-Date)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Report data contains financial aggregations\", function () {",
+                  "    var res = pm.response.json();",
+                  "    pm.expect(res.data).to.have.property('tenant');",
+                  "    pm.expect(res.data).to.have.property('current_month');",
+                  "    pm.expect(res.data.current_month).to.have.property('total_revenue');",
+                  "    pm.expect(res.data.current_month).to.have.property('total_transactions');",
+                  "    pm.expect(res.data).to.have.property('daily_breakdown');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/reports",
+              "host": ["{{base_url}}"],
+              "path": ["reports"]
+            },
+            "description": "Menampilkan laporan omzet default bulan berjalan (Month-to-Date) beserta breakdown harian dan transaksi terbaru."
+          },
+          "response": []
+        },
+        {
+          "name": "4.2 Get Revenue & Sales Report with Date Range Filter",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Filtered period report data returned\", function () {",
+                  "    var res = pm.response.json();",
+                  "    pm.expect(res.data.period.start_date).to.eql('2026-08-01');",
+                  "    pm.expect(res.data.period.end_date).to.eql('2026-09-08');",
+                  "    pm.expect(res.data).to.have.property('filtered_summary');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/reports?start_date=2026-08-01&end_date=2026-09-08",
+              "host": ["{{base_url}}"],
+              "path": ["reports"],
+              "query": [
+                {
+                  "key": "start_date",
+                  "value": "2026-08-01",
+                  "description": "Tanggal mulai filter laporan"
+                },
+                {
+                  "key": "end_date",
+                  "value": "2026-09-08",
+                  "description": "Tanggal akhir filter laporan"
+                }
+              ]
+            },
+            "description": "Menampilkan laporan omzet dengan rentang tanggal khusus dinamis."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. Multi-Tenant & Security Tests",
+      "description": "Kumpulan skenario pengujian isolasi tenant, manipulasi ID silang (cross-tenant tampering), dan pelanggaran hak akses (RBAC).",
+      "item": [
+        {
+          "name": "5.1 Cross-Tenant Isolation: Tenant A access Tenant B Product (Expect 404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Zero Data Leakage: Status code is 404 Not Found\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test(\"Product from another tenant is invisible\", function () {",
+                  "    var res = pm.response.json();",
+                  "    // Laravel standard 404 message or custom error",
+                  "    pm.expect(pm.response.code).to.eql(404);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/products/{{product_b_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["products", "{{product_b_id}}"]
+            },
+            "description": "UJI KEBOCORAN DATA: Pastikan sedang login sebagai user Tenant A. Endpoint ini mencoba mengakses produk ID 6 (milik Tenant B CV Sentosa). Karena TenantScope bekerja di level Eloquent, produk dianggap tidak ada dan mengembalikan HTTP 404 Not Found!"
+          },
+          "response": []
+        },
+        {
+          "name": "5.2 Cross-Tenant Injection: Tenant A checkouts Tenant B Product (Expect 422)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 422 Unprocessable Content\", function () {",
+                  "    pm.response.to.have.status(422);",
+                  "});",
+                  "",
+                  "pm.test(\"Validation catches cross-tenant product injection\", function () {",
+                  "    var res = pm.response.json();",
+                  "    pm.expect(res.errors).to.have.property('items.0.product_id');",
+                  "    pm.expect(res.errors['items.0.product_id'][0]).to.include('bukan milik tenant Anda');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transaction_date\": \"2026-09-08\",\n  \"items\": [\n    {\n      \"product_id\": {{product_b_id}},\n      \"qty\": 1\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/transactions",
+              "host": ["{{base_url}}"],
+              "path": ["transactions"]
+            },
+            "description": "UJI INTEGRITAS INJEKSI: Tenant A mencoba melakukan transaksi menggunakan ID produk milik Tenant B. Validasi StoreTransactionRequest mendeteksi produk tersebut tidak ada di tenant aktif dan menolak transaksi dengan 422 Unprocessable Content."
+          },
+          "response": []
+        },
+        {
+          "name": "5.3 RBAC Test: Staff tries to Delete Product (Expect 403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 403 Forbidden\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "",
+                  "pm.test(\"Message specifies Owner-only deletion permission\", function () {",
+                  "    var res = pm.response.json();",
+                  "    pm.expect(res.message).to.include('Hanya Owner yang berhak');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/products/{{product_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["products", "{{product_id}}"]
+            },
+            "description": "UJI HAK AKSES PERAN (RBAC): Pastikan login terlebih dahulu dengan user Staff (Request 1.2). Ketika Staff mencoba menghapus produk, ProductPolicy menolaknya dengan HTTP 403 Forbidden."
+          },
+          "response": []
+        },
+        {
+          "name": "5.4 RBAC Test: Staff tries to Access Reports (Expect 403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 403 Forbidden\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "",
+                  "pm.test(\"EnsureRole middleware blocks Staff access\", function () {",
+                  "    var res = pm.response.json();",
+                  "    pm.expect(res.message).to.include('owner');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/reports",
+              "host": ["{{base_url}}"],
+              "path": ["reports"]
+            },
+            "description": "UJI HAK AKSES LAPORAN: Pastikan login sebagai Staff (Request 1.2). Ketika Staff mengakses GET /api/reports, middleware `role:owner` langsung memblokir dengan status HTTP 403 Forbidden."
+          },
+          "response": []
+        },
+        {
+          "name": "5.5 Security Test: Access Protected Route without Token (Expect 401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 401 Unauthorized\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/products",
+              "host": ["{{base_url}}"],
+              "path": ["products"]
+            },
+            "description": "UJI KEAMANAN SANCTUM: Memanggil endpoint yang dilindungi tanpa menyertakan Bearer Token. Server harus mengembalikan HTTP 401 Unauthenticated."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

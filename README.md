@@ -16,6 +16,8 @@ Sistem dirancang dengan pola pikir ERP profesional: isolasi data antar penyewa (
 6. [Panduan Instalasi & Menjalankan Aplikasi](#6-panduan-instalasi--menjalankan-aplikasi)
 7. [Automated Testing & Hasil Pengujian](#7-automated-testing--hasil-pengujian)
 8. [Dokumentasi API Endpoints](#8-dokumentasi-api-endpoints)
+9. [Postman Collection & Environment](#9-postman-collection--environment)
+10. [Git Repository & Commit History](#10-git-repository--commit-history)
 
 ---
 
@@ -371,7 +373,22 @@ Semua endpoint berawalan prefix `/api`. Endpoint yang memerlukan autentikasi waj
 
 ---
 
-## 9. Git Repository & Commit History
+## 9. Postman Collection & Environment
+
+Tersedia berkas ekspor Postman siap pakai di dalam folder [`postman/`](file:///c:/xampp/htdocs/oka-iki-indonesia/technical-test/postman) yang mencakup 22 endpoint requests beserta assertions dan skrip otomatis:
+- **Koleksi API**: [`postman/Mini_ERP_MultiTenant_API.postman_collection.json`](file:///c:/xampp/htdocs/oka-iki-indonesia/technical-test/postman/Mini_ERP_MultiTenant_API.postman_collection.json)
+- **Environment**: [`postman/Mini_ERP_Local.postman_environment.json`](file:///c:/xampp/htdocs/oka-iki-indonesia/technical-test/postman/Mini_ERP_Local.postman_environment.json)
+- **Panduan Penggunaan Lengkap**: [`postman/README.md`](file:///c:/xampp/htdocs/oka-iki-indonesia/technical-test/postman/README.md)
+
+### Fitur Utama Koleksi Postman:
+1. **Auto-Token Capture**: Setiap kali menjalankan request login, token Sanctum (`Bearer {{token}}`), `user_role`, dan `tenant_name` otomatis disimpan ke environment tanpa perlu salin-tempel manual.
+2. **Pengujian Multi-Tenant (Zero Data Leakage)**: Skenario akses produk lintas tenant (ekspektasi `404`) dan checkout dengan produk tenant lain (ekspektasi `422`).
+3. **Pengujian RBAC**: Skenario staf mencoba menghapus produk (ekspektasi `403`) dan staf mengakses laporan keuangan (ekspektasi `403`).
+4. **Pengujian ERP Immutability**: Skenario penghapusan transaksi ditolak demi integritas data (ekspektasi `405 Method Not Allowed`).
+
+---
+
+## 10. Git Repository & Commit History
 
 Repository dikelola dengan commit atomik dan deskriptif:
 1. `feat(backend): initialize Laravel 11 project with Sanctum and CORS configuration`
